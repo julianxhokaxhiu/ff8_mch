@@ -1892,7 +1892,7 @@ def BLEND_TO_MCH():
     outputfile.seek(newheader.ModelAddress +newheader.ObOffset,0)
     
     for vgroup in char_ob.vertex_groups:
-        outputfile.write((Vorder[vgroup.index][1]-1).to_bytes(2,'little'))#1stvertex
+        outputfile.write((Vinvert[Vorder[vgroup.index][0]]).to_bytes(2,'little'))#1stvertex
         outputfile.write(len(Vorder[vgroup.index]).to_bytes(2,'little'))#vertex count
         boneID=-1
         for i in range ( 0 ,len(bonelist)):
