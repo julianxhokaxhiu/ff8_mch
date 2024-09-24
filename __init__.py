@@ -1651,17 +1651,17 @@ def BLEND_TO_MCH():
     Vorder_total=0
     rot_eul=Euler((0,0,0),'XYZ')    
     me=char_ob.data
-    
+    vfound=[ 0 for i in range(len(char_ob.data.vertices))]#prevent doubles in vertex groups
     for vgroup in char_ob.vertex_groups:
-        
         for vertID in range(0,len(char_ob.data.vertices)):
             try: 
                 vgroup.weight(vertID)
             except:
                 pass  
             else:             
-                if vgroup.weight(vertID)>0:
-                   Vorder[vgroup.index].append(vertID)
+                if ( (vgroup.weight(vertID)>0) and (vfound[vertID]==0)):#groups needs to be perfectly independant.
+                    vfound[vertID]=1
+                    Vorder[vgroup.index].append(vertID)
         Vorder_total+=len(Vorder[vgroup.index])
                    
     print("Vorder total :{}\n".format(hex(Vorder_total),'08x'))    
@@ -1757,8 +1757,8 @@ def BLEND_TO_MCH():
             outputfile.write(faceunk.to_bytes(8,'little'))#Always 4400000001000000
                 
             outputfile.write(Vinvert[face.vertices[1]].to_bytes(2,'little'))
-            outputfile.write(Vinvert[face.vertices[2]].to_bytes(2,'little'))
             outputfile.write(Vinvert[face.vertices[0]].to_bytes(2,'little'))
+            outputfile.write(Vinvert[face.vertices[2]].to_bytes(2,'little'))
             outputfile.write(b'\x00' * 2)#skip 2 bytes
             
         else:#quad
@@ -1767,8 +1767,8 @@ def BLEND_TO_MCH():
             faceunk=0x0000000100000044
             outputfile.write(faceunk.to_bytes(8,'little'))#Always 4400000001000000
             outputfile.write(Vinvert[face.vertices[1]].to_bytes(2,'little'))
-            outputfile.write(Vinvert[face.vertices[2]].to_bytes(2,'little'))
             outputfile.write(Vinvert[face.vertices[0]].to_bytes(2,'little'))
+            outputfile.write(Vinvert[face.vertices[2]].to_bytes(2,'little'))
             outputfile.write(Vinvert[face.vertices[3]].to_bytes(2,'little'))
         #--normals??
         normalV=[0,0,0]
@@ -1783,8 +1783,8 @@ def BLEND_TO_MCH():
         if normalV[2]<0:
             normalV[2]+=0x10000
     
-        outputfile.write(int(normalV[0]).to_bytes(2,'little'))
         outputfile.write(int(normalV[1]).to_bytes(2,'little'))
+        outputfile.write(int(normalV[0]).to_bytes(2,'little'))
         outputfile.write(int(normalV[2]).to_bytes(2,'little'))
         outputfile.write(int(normalV[0]).to_bytes(2,'little'))
         
@@ -1818,10 +1818,10 @@ def BLEND_TO_MCH():
                 
             outputfile.write(int(UVcoords[1][0]).to_bytes(1,'little'))
             outputfile.write(int(UVcoords[1][1]).to_bytes(1,'little'))
-            outputfile.write(int(UVcoords[2][0]).to_bytes(1,'little'))
-            outputfile.write(int(UVcoords[2][1]).to_bytes(1,'little'))
             outputfile.write(int(UVcoords[0][0]).to_bytes(1,'little'))
             outputfile.write(int(UVcoords[0][1]).to_bytes(1,'little'))
+            outputfile.write(int(UVcoords[2][0]).to_bytes(1,'little'))
+            outputfile.write(int(UVcoords[2][1]).to_bytes(1,'little'))
             outputfile.write(b'\x00' * 2)#skip 2 bytes
             
         else:
@@ -1841,10 +1841,10 @@ def BLEND_TO_MCH():
                 
             outputfile.write(int(UVcoords[1][0]).to_bytes(1,'little'))
             outputfile.write(int(UVcoords[1][1]).to_bytes(1,'little'))
-            outputfile.write(int(UVcoords[2][0]).to_bytes(1,'little'))
-            outputfile.write(int(UVcoords[2][1]).to_bytes(1,'little'))
             outputfile.write(int(UVcoords[0][0]).to_bytes(1,'little'))
             outputfile.write(int(UVcoords[0][1]).to_bytes(1,'little'))
+            outputfile.write(int(UVcoords[2][0]).to_bytes(1,'little'))
+            outputfile.write(int(UVcoords[2][1]).to_bytes(1,'little'))
             outputfile.write(int(UVcoords[3][0]).to_bytes(1,'little'))
             outputfile.write(int(UVcoords[3][1]).to_bytes(1,'little'))
         
