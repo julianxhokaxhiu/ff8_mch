@@ -18,7 +18,7 @@
 *********Fieldmodel blender script***************
 **********************************************"""
 import os, bpy.path, bpy.ops, bmesh, math
-from os.path import basename, dirname
+from os.path import basename, dirname, join
 from mathutils import Vector, Matrix, Euler
 
 bl_info = {
@@ -45,7 +45,7 @@ def Empty_dir(directory):
     dir_path = bpy.path.abspath(directory)
     filelist = [file for file in os.listdir(dir_path)]  # create list
     for file in filelist:
-        filepath = "".join([dir_path, file])
+        filepath = join(dir_path, file)
         os.remove(filepath)
     return
 
@@ -1746,8 +1746,8 @@ def TIM_TO_BLEND(inputfile, name):
 
 def MCH_TO_BLEND():
     cur_dir = bpy.path.abspath("//")
-    indir_name = "".join([cur_dir, "INPUT\\"])
-    outdir_name = "".join([cur_dir, "OUTPUT\\"])
+    indir_name = join(cur_dir, "INPUT")
+    outdir_name = join(cur_dir, "OUTPUT")
     mch_found = 0
     one_found = 0
     char_name = "none"
@@ -1768,7 +1768,7 @@ def MCH_TO_BLEND():
     if one_found == 0:
         print("NO chara.ONE found! No animation will be created\n")
 
-    inputpath = "".join([indir_name, entity])
+    inputpath = join(indir_name, entity)
     print("{}\n".format(inputpath))
     inputfile = open(inputpath, "rb")
 
@@ -1928,7 +1928,7 @@ def MCH_TO_BLEND():
         (filename, extension) = os.path.splitext(entity)
         if extension == ".one":
             one_found = 1
-            onepath = "".join([indir_name, entity])
+            onepath = join(indir_name, entity)
             print("{}\n".format(onepath))
             break
     onefile = open(onepath, "rb")
@@ -1998,8 +1998,8 @@ def MCH_TO_BLEND():
 
 def BLEND_TO_MCH():
     cur_dir = bpy.path.abspath("//")
-    indir_name = "".join([cur_dir, "INPUT\\"])
-    outdir_name = "".join([cur_dir, "OUTPUT\\"])
+    indir_name = join(cur_dir, "INPUT")
+    outdir_name = join(cur_dir, "OUTPUT")
     mch_found = 0
     one_found = 0
     char_name = "none"
@@ -2013,7 +2013,7 @@ def BLEND_TO_MCH():
             print("Character {} open".format(char_name))
             break
 
-    inputpath = "".join([indir_name, entity])
+    inputpath = join(indir_name, entity)
     print("{}\n".format(inputpath))
     inputfile = open(inputpath, "rb")
 
@@ -2024,7 +2024,7 @@ def BLEND_TO_MCH():
     header.char_name = char_name
     print("{}\n".format(header))
 
-    outputpath = "".join([outdir_name, char_name, "-new.mch"])
+    outputpath = join(outdir_name, char_name, "-new.mch")
     print("{}\n".format(outputpath))
     outputfile = open(outputpath, "wb")
 
@@ -2543,7 +2543,7 @@ class MchToBlend_op(bpy.types.Operator, ImportHelper):
 
     def execute(self, context):
         ClearScene()
-        MCH_TO_BLEND(context, self.filepath)
+        MCH_TO_BLEND()
         return {"FINISHED"}
 
 
@@ -2570,7 +2570,7 @@ class BlendToMch_op(bpy.types.Operator, ExportHelper):
         return {"RUNNING_MODAL"}
 
     def execute(self, context):
-        BLEND_TO_MCH(context, self.filepath)
+        BLEND_TO_MCH()
         return {"FINISHED"}
 
 
