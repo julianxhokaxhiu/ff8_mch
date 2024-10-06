@@ -20,6 +20,8 @@
 import os,bpy.path,bpy.ops,bmesh,math
 from os.path import basename,dirname
 from mathutils import Vector, Matrix,Euler
+from bpy.props import StringProperty, BoolProperty
+from bpy.types import Operator
 
 bl_info = {
     "name": "FF8 MCH Field Models",
@@ -30,8 +32,8 @@ bl_info = {
     "description": "Import field models from FF8",
     "category": "Import-Export"
 }
-global curr_model_name=""
-global curr_one_name=""
+global curr_model_name
+global curr_one_name
 global MAX_SIZE,MAX_TEXSIZE,MAX_ANGLE#max angle is 2pi
 MAX_SIZE=0x1000
 MAX_TEXSIZE=0x100#0x800#2048 *2048 upsacaled texture
@@ -1279,43 +1281,63 @@ def TIM_TO_BLEND(inputfile,name):
 
     return 
 
-def MCH_TO_BLEND():
-    cur_dir=bpy.path.abspath("//")
-    indir_name=''.join([cur_dir,"INPUT\\"])
-    outdir_name=''.join([cur_dir,"OUTPUT\\"]) 
+def MCH_TO_BLEND(context,directory=""):
+    #----OLD CODE ---05/10/2024-----
+    #--------------------------------
+    #cur_dir=bpy.path.abspath("//")
+    #indir_name=''.join([cur_dir,"INPUT\\"])
+    #outdir_name=''.join([cur_dir,"OUTPUT\\"]) 
+    #mch_found=0
+    #one_found=0
+    #char_name='none'
+    #filelist=[entity for entity in os.listdir(indir_name)]#create list
+    #for entity in filelist:
+        #(filename, extension) = os.path.splitext(entity)
+        #if extension==".mch":
+            #mch_found=1
+            #char_name=filename[0:4]
+            #print("Character {} open\n".format(char_name))
+        #elif extension==".one":
+            #one_found=1
+            #curr_one_name=filename
+            #print("{} found\n".format(entity))
+    #if mch_found==0:
+        #print("NO MCH found! Please put it in INPUT folder\n")
+        #return
+    #if one_found==0:
+        #print("NO chara.ONE found! No animation will be created\n")
+   
+    #inputpath=''.join([indir_name,char_name,".mch"])
+    
+
     mch_found=0
     one_found=0
     char_name='none'
-    filelist=[entity for entity in os.listdir(indir_name)]#create list
+    filelist=[entity for entity in os.listdir(directory)]#create list
     for entity in filelist:
         (filename, extension) = os.path.splitext(entity)
         if extension==".mch":
             mch_found=1
             char_name=filename[0:4]
-            print("Character {} open\n".format(char_name))
         elif extension==".one":
             one_found=1
-	    curr_one_name=filename
+            curr_one_name=filename
             print("{} found\n".format(entity))
     if mch_found==0:
         print("NO MCH found! Please put it in INPUT folder\n")
         return
     if one_found==0:
         print("NO chara.ONE found! No animation will be created\n")
-   
-    inputpath=''.join([indir_name,char_name,".mch"])
+    
+    
+    filepath=''.join([directory,char_name,".mch"])
+
+    inputfile=open(filepath,"rb")
+    char_name=basename(filepath).split('.mch')[0]
+    print("model name:{}\n".format(char_name))
     curr_model_name=char_name
-    print("{}\n".format(inputpath))
-
-    inputfile=open(inputpath,"rb")
-    
-
-    header=MchHeader_class()
-   
-    
-    header=ReadMCH(inputfile) 
-     
-    
+    header=MchHeader_class()   
+    header=ReadMCH(inputfile)    
     header.char_name=char_name
     print("{}\n".format(header))
     
@@ -1460,18 +1482,25 @@ def MCH_TO_BLEND():
     #--------------------------------------------
     
     #Read Anim
-    one_found=0
-    onepath="none"
+    #----OLD CODE ---05/10/2024-----
+    #--------------------------------
+    #one_found=0
+    #onepath="none"
     
-    for entity in filelist:
-        (filename, extension) = os.path.splitext(entity)
-        if extension==".one":
-            one_found=1
-            onepath=''.join([indir_name,entity])
-            print("{}\n".format(onepath))
-            break             
-    onefile=open(onepath,"rb")
-    ReadAnim(boneList,onefile,char_name)
+    #for entity in filelist:
+        #(filename, extension) = os.path.splitext(entity)
+        #if extension==".one":
+            #one_found=1
+            #onepath=''.join([indir_name,entity])
+            #print("{}\n".format(onepath))
+            #break
+    #onefile=open(onepath,"rb")
+    if one_found==1:
+        filepath=''.join([directory,curr_one_name,".one"])
+        onefile=open(filepath,"rb")
+        ReadAnim(boneList,onefile,char_name)
+              
+    
     #Read the skin objects
     char_ob=bpy.context.scene.objects[header.char_name]
     bpy.context.view_layer.objects.active=char_ob
@@ -1535,38 +1564,62 @@ def MCH_TO_BLEND():
 
     return
 
-def BLEND_TO_MCH():
-    cur_dir=bpy.path.abspath("//")
-    indir_name=''.join([cur_dir,"INPUT\\"])
-    outdir_name=''.join([cur_dir,"OUTPUT\\"]) 
+def BLEND_TO_MCH(context,directory=""):
+    #----OLD CODE ---05/10/2024-----
+    #--------------------------------
+    #cur_dir=bpy.path.abspath("//")
+    #indir_name=''.join([cur_dir,"INPUT\\"])
+    #outdir_name=''.join([cur_dir,"OUTPUT\\"]) 
+    #mch_found=0
+    #one_found=0
+    #char_name='none'
+    
+    #filelist=[entity for entity in os.listdir(indir_name)]#create list
+    #for entity in filelist:
+        #(filename, extension) = os.path.splitext(entity)
+        #if extension==".mch":
+           # mch_found=1
+            #char_name=filename[0:4]
+            #print("Character {} open".format(char_name))
+            #break
+   
+    #inputpath=''.join([indir_name,entity])
+    #outputpath=''.join([outdir_name,char_name,'-new.mch'])
+    #print("{}\n".format(outputpath))
+    
     mch_found=0
-    one_found=0
     char_name='none'
     
-    filelist=[entity for entity in os.listdir(indir_name)]#create list
+    filelist=[entity for entity in os.listdir(directory)]#create list
     for entity in filelist:
         (filename, extension) = os.path.splitext(entity)
         if extension==".mch":
             mch_found=1
             char_name=filename[0:4]
-            print("Character {} open".format(char_name))
+            curr_model_name=char_name
             break
    
-    inputpath=''.join([indir_name,entity])
-    curr_model_name=char_name
-    print("{}\n".format(inputpath))
+    inputpath=''.join([directory,char_name,".mch"])
+    outputpath=''.join([directory,char_name,'-new.mch'])
+    
     inputfile=open(inputpath,"rb")
+    
+    outputfile=open(outputpath,"wb")
+    
+    
+     
+        
+    
     
     #We need the original file to copy information: name, number of bones, texture animation
     
     header=MchHeader_class()
     header=ReadMCH(inputfile)
     header.char_name=char_name
-    print("{}\n".format(header))    
-        
-    outputpath=''.join([outdir_name,char_name,'-new.mch'])
-    print("{}\n".format(outputpath))
-    outputfile=open(outputpath,"wb")
+    print("{}\n".format(header))   
+    
+    
+    
     
     #Get info from blend file
     Vcount=0
@@ -2004,35 +2057,60 @@ def BLEND_TO_MCH():
 
     return
     
-def FIELD_TO_60FPS():
-    '''This value controls the number of intermediate frames to create'''
-    F_INTER=1# Between 2 frames, we interpolate F_INTER frames
+def FIELD_TO_60FPS(context,directory=""):
+   
+    #----OLD CODE ---05/10/2024-----
+    #--------------------------------
+    #cur_dir=bpy.path.abspath("//")
+    #indir_name=''.join([cur_dir,"INPUT\\"])
+    #outdir_name=''.join([cur_dir,"OUTPUT\\"]) 
+    #one_found=0
     
-    cur_dir=bpy.path.abspath("//")
-    indir_name=''.join([cur_dir,"INPUT\\"])
-    outdir_name=''.join([cur_dir,"OUTPUT\\"]) 
+    #filelist=[entity for entity in os.listdir(indir_name)]#create list
+    #for entity in filelist:
+        #(filename, extension) = os.path.splitext(entity)
+        #if extension==".one":
+            #one_found=1
+            #curr_one_name=filename
+            #break
+    #if one_found==0:
+        #print("No chara.one file found\n")
+        #return
+        
+    #inputpath=''.join([indir_name,entity])
+    #print("input {}\n".format(inputpath))
+    #inputfile=open(inputpath,"rb")
+    
+    #outputpath=''.join([outdir_name,filename,'-new.one'])
+    #print("output {}\n".format(outputpath))
+    #outputfile=open(outputpath,"wb")#read and write mode to modify locally the file
+    
     one_found=0
     
-    filelist=[entity for entity in os.listdir(indir_name)]#create list
+    filelist=[entity for entity in os.listdir(directory)]#create list
     for entity in filelist:
         (filename, extension) = os.path.splitext(entity)
         if extension==".one":
             one_found=1
-	    curr_one_name=filename
+            curr_one_name=filename
             break
-    if one_found==0:
-        print("No chara.one file found\n")
-        return
-        
-    inputpath=''.join([indir_name,entity])
-    print("input {}\n".format(inputpath))
+    print("{} one file found\n".format(curr_one_name))
+   
+    inputpath=''.join([directory,curr_one_name,".one"])
+    outputpath=''.join([directory,curr_one_name,"-new.one"])
+    
     inputfile=open(inputpath,"rb")
+    
+    outputfile=open(outputpath,"wb")
+    
+    
+    
+    '''This value controls the number of intermediate frames to create'''
+    F_INTER=1# Between 2 frames, we interpolate F_INTER frames
+    
+    
     charCount=0
-    #We need the original file to copy information    
-        
-    outputpath=''.join([outdir_name,filename,'-new.one'])
-    print("output {}\n".format(outputpath))
-    outputfile=open(outputpath,"wb")#read and write mode to modify locally the file
+    
     
     #copy some info from original file
     #----------------------------------
@@ -2365,65 +2443,85 @@ from bpy_extras.io_utils import ImportHelper, ExportHelper
 """**********************************************
 FF8 operators definitions for the user interface
 ************************************************"""
-class fieldTo60fps_op(bpy.types.Operator, ExportHelper):
+class fieldTo60fps_op(bpy.types.Operator):
     """convert chara.one animation to 60fps"""
     bl_idname = "ff8tools.field260fps"#No capitals in bl_idname!!"
-    bl_label = "Interpolate field animation to 60fps"
-    filename_ext = ".one"
-    filter_glob = StringProperty(default="*.one", options={'HIDDEN'})
+    bl_label = "EXPORT folder must contain original CHARA.ONE"
+    bl_option ={'REGISTER'}
+    
+    directory: StringProperty(
+        name="Outdir Path",
+        description="Where I will save my stuff")
+        
+    filter_folder: BoolProperty(
+        default=True,
+        options={"HIDDEN"}
+        )
 
-    def invoke(self, context, _event):
-        global curr_one_name
-        if not self.filepath:
-            blend_filepath = context.blend_data.filepath
-            if not blend_filepath:
-                blend_filepath = curr_one_name
-            else:
-                blend_filepath = os.path.splitext(blend_filepath)[0]
-
-            self.filepath = blend_filepath + self.filename_ext
-
+    def invoke(self, context, event):
+        # Open browser, take reference to 'self' read the path to selected
+        # file, put path in predetermined self fields.
         context.window_manager.fileselect_add(self)
+        # Tells Blender to hang on for the slow user input
         return {'RUNNING_MODAL'}
+
     def execute(self, context):
-        ClearScene()
-        FIELD_TO_60FPS()
+        FIELD_TO_60FPS(context, self.directory)
         return {'FINISHED'}
 
-class MchToBlend_op(bpy.types.Operator, ImportHelper):
+class MchToBlend_op(bpy.types.Operator):
     '''Import from FF8 (.mch)'''
     bl_idname = "ff8tools.mch2blend"#No capitals in bl_idname!!"
-    bl_label = "Import MCH from FF8"
-    filename_ext = ".mch"
-    filter_glob = StringProperty(default="*.mch", options={'HIDDEN'})
+    bl_label = "INPUT folder for MCH and CHARA.ONE"
+    bl_option ={'REGISTER'}
+    
+    directory: StringProperty(
+        name="Outdir Path",
+        description="Where I will save my stuff")
+        
+    filter_folder: BoolProperty(
+        default=True,
+        options={"HIDDEN"}
+        )
 
+    def invoke(self, context, event):
+        # Open browser, take reference to 'self' read the path to selected
+        # file, put path in predetermined self fields.
+        context.window_manager.fileselect_add(self)
+        # Tells Blender to hang on for the slow user input
+        return {'RUNNING_MODAL'}
+    
     def execute(self, context):
         ClearScene()
-        MCH_TO_BLEND(context, self.filepath)
+        MCH_TO_BLEND(context, self.directory)
         return {'FINISHED'}
+    
+    
 
-class BlendToMch_op(bpy.types.Operator, ExportHelper):
+class BlendToMch_op(bpy.types.Operator):
     '''Export to FF8 (.mch)'''
     bl_idname = "ff8tools.blend2mch"#No capitals in bl_idname!!"
-    bl_label = "Export MCH to FF8"
-    filename_ext = ".mch"
-    filter_glob = StringProperty(default="*.mch", options={'HIDDEN'})
+    bl_label = "EXPORT folder must contain original MCH"
+    bl_option ={'REGISTER'}
+    
+    directory: StringProperty(
+        name="Outdir Path",
+        description="Where I will save my stuff")
+        
+    filter_folder: BoolProperty(
+        default=True,
+        options={"HIDDEN"}
+        )
 
-    def invoke(self, context, _event):
-        global curr_model_name
-        if not self.filepath:
-            blend_filepath = context.blend_data.filepath
-            if not blend_filepath:
-                blend_filepath = curr_model_name
-            else:
-                blend_filepath = os.path.splitext(blend_filepath)[0]
-
-            self.filepath = blend_filepath + self.filename_ext
-
+    def invoke(self, context, event):
+        # Open browser, take reference to 'self' read the path to selected
+        # file, put path in predetermined self fields.
         context.window_manager.fileselect_add(self)
+        # Tells Blender to hang on for the slow user input
         return {'RUNNING_MODAL'}
+
     def execute(self, context):
-        BLEND_TO_MCH(context, self.filepath)
+        BLEND_TO_MCH(context, self.directory)
         return {'FINISHED'}
 
 def menu_func_import(self, context):
@@ -2435,6 +2533,8 @@ def menu_func_field260(self, context):
     self.layout.operator(fieldTo60fps_op.bl_idname, text="FF8 60 fps field animation (.one)")
 
 def register():#register all custom operators
+    #check if already in menu
+  
     bpy.utils.register_class(MchToBlend_op)
     bpy.utils.register_class(BlendToMch_op)
     bpy.utils.register_class(fieldTo60fps_op)
@@ -2444,14 +2544,15 @@ def register():#register all custom operators
 
 
 def unregister():#unregister all custom operators
-    bpy.types.TOPBAR_MT_file_import.remove(menu_func_import)
-    bpy.types.TOPBAR_MT_file_export.remove(menu_func_export)
-    bpy.types.TOPBAR_MT_file_export.remove(menu_func_field260)
     bpy.utils.unregister_class(MchToBlend_op)
     bpy.utils.unregister_class(BlendToMch_op)
     bpy.utils.unregister_class(fieldTo60fps_op)
+    bpy.types.TOPBAR_MT_file_import.remove(menu_func_import)
+    bpy.types.TOPBAR_MT_file_export.remove(menu_func_export)
+    bpy.types.TOPBAR_MT_file_export.remove(menu_func_field260)
 
 
 if __name__=="__main__":
     register()
+        
     print("Import successful!")
