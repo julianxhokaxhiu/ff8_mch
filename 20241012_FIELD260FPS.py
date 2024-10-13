@@ -8,7 +8,7 @@ bl_info = {
     "name": "FF8 60 FPS conversion",
     "author": "Shunsq",
     "blender": (4, 2, 0),
-    "version": (0, 1, 0),
+    "version": (0, 1, 1),
     "location": "File > Export > 60fps chara.one(.one)",
     "description": "Convert chara.one animations to 60fps",
     "category": "Import-Export"
@@ -51,44 +51,48 @@ def FIELD_TO_60FPS(directory=""):
     ModelAddress=[ 0 for char in range(charCount) ]
     ModelSize=[ 0 for char in range(charCount) ]
     ModelHasTim=[ 0 for char in range(charCount) ]#if <=0xd0000000 then it's a NPC with textures. Starting here, it is smae format as MCH for NPC
-    ModelTimOffset=[ 0 for char in range(charCount) ]#texture address endcode for NPC, just like MCH
     ModelOffset=[ 0 for char in range(charCount) ]# 0 for main chars, because no texure in charaone. modelAddress for NPC; because textures are in charaone
     ModelName=[ "" for char in range(charCount) ]
     ModelAnimCount=[ 0 for char in range(charCount) ]
     Address_in_file=[ 0 for char in range(charCount) ]#To change later address and size if animations have changed
     
     for charID in range(charCount):
-        ModelAddress[charID]=int.from_bytes(inputfile.read(4),byteorder='little')
-        ModelSize[charID]=int.from_bytes(inputfile.read(4),byteorder='little')
-        
-        
-        inputfile.seek(4,1)#Model size duplicate ?
-        
-        ModelHasTim[charID]=int.from_bytes(inputfile.read(4),byteorder='little')
-        if ModelHasTim[charID]<=0xd0000000:
-            ModelTimOffset[charID]=int.from_bytes(inputfile.read(4),byteorder='little')#always 01800140
-        ModelOffset[charID]=int.from_bytes(inputfile.read(4),byteorder='little')
-        ModelName[charID]=inputfile.read(4).decode(encoding="cp437")
-         
-        endcode=int.from_bytes(inputfile.read(8),byteorder='little')# changes depending on the field
-        
         Address_in_file[charID]=outputfile.tell()#will be used later to change address and size  
+        ModelAddress[charID]=int.from_bytes(inputfile.read(4),byteorder='little')
         outputfile.write(ModelAddress[charID].to_bytes(4,'little'))
-       
-        
+
+        ModelSize[charID]=int.from_bytes(inputfile.read(4),byteorder='little')
+        inputfile.seek(4,1)#Model size duplicate ?
         outputfile.write(ModelSize[charID].to_bytes(4,'little'))
         outputfile.write(ModelSize[charID].to_bytes(4,'little'))#duplicate of model size
+        
+        ModelHasTim[charID]=int.from_bytes(inputfile.read(4),byteorder='little')
         outputfile.write(ModelHasTim[charID].to_bytes(4,'little'))
+
         if ModelHasTim[charID]<=0xd0000000:
-            outputfile.write(ModelTimOffset[charID].to_bytes(4,'little'))
+            endtex=int.from_bytes(inputfile.read(4),byteorder='little')
+            outputfile.write(endtex.to_bytes(4,'little'))
+            texCount=1#at least 1 texture
+            while endtex!=0xFFFFFFFF:#actually 0xFFFFFFFF is end code for textures. So it is possible to have 2 textures, or even more
+                texCount+=1
+                endtex=int.from_bytes(inputfile.read(4),byteorder='little')
+                outputfile.write(endtex.to_bytes(4,'little'))
+
+        ModelOffset[charID]=int.from_bytes(inputfile.read(4),byteorder='little')
         outputfile.write(ModelOffset[charID].to_bytes(4,'little'))
-        
+
+        ModelName[charID]=inputfile.read(4).decode(encoding="cp437")
         outputfile.write(ModelName[charID].encode('ascii'))
-        
+        print("modelname {}\n".format(ModelName[charID]))
+         
+        endcode=int.from_bytes(inputfile.read(8),byteorder='little')# changes depending on the field
         outputfile.write(endcode.to_bytes(8,'little'))
         
+        
+  
     padding=ModelAddress[0]+4 - outputfile.tell()
     outputfile.write(b'\x00'*padding)# list of zeroes before model
+  
     
     outputfile.close()
     outputfile=open(outputpath,"r+b")#read and write mode to modify locally the file
@@ -376,11 +380,3 @@ if __name__=="__main__":
     folder_selected = filedialog.askdirectory()
 
     FIELD_TO_60FPS(folder_selected)
-        
-   
-
-
-
-
-
-
