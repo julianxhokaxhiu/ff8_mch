@@ -27,7 +27,7 @@ bl_info = {
     "name": "FF8 MCH Field Models",
     "author": "Shunsq,Julian Xhokaxhiu",
     "blender": (4, 2, 0),
-    "version": (0, 1, 0),
+    "version": (0, 2, 0),
     "location": "File > Import > FF8 Field Model (.mch)",
     "description": "Import field models from FF8",
     "category": "Import-Export"
@@ -36,7 +36,7 @@ global curr_model_name
 global curr_one_name
 global MAX_SIZE,MAX_TEXSIZE,MAX_ANGLE#max angle is 2pi
 MAX_SIZE=0x1000
-MAX_TEXSIZE=0x100#0x800#2048 *2048 upsacaled texture
+MAX_TEXSIZE=0x80#0x80 by default.DO NOT CHANGE THIS.
 MAX_ANGLE=0x800#180deg
 UPSCALE=1#0x100 for upscale
 
@@ -488,10 +488,6 @@ def createMeshFromData(name, verts, faces, uvs):
         
     me.from_pydata(BVert, [], BFace)    
     
-    #test return
-    #inputfile.close()
-    #return ob
-    #end-test return 
     
     me.uv_layers.new(name=name+'UV')# was me.uv_textures.new(name+'UV')
     bpy.ops.object.mode_set(mode='EDIT')
@@ -503,14 +499,14 @@ def createMeshFromData(name, verts, faces, uvs):
     for i in range(len(bm.faces)):
         f=bm.faces[i]
         if(len(f.loops)==3):
-            f.loops[0][uv_layer].uv=(uvs[faces[i].vt1].u/256,uvs[faces[i].vt1].v/256)
-            f.loops[1][uv_layer].uv=(uvs[faces[i].vt2].u/256,uvs[faces[i].vt2].v/256)
-            f.loops[2][uv_layer].uv=(uvs[faces[i].vt3].u/256,uvs[faces[i].vt3].v/256)
+            f.loops[0][uv_layer].uv=(uvs[faces[i].vt1].u/128,uvs[faces[i].vt1].v/128)
+            f.loops[1][uv_layer].uv=(uvs[faces[i].vt2].u/128,uvs[faces[i].vt2].v/128)
+            f.loops[2][uv_layer].uv=(uvs[faces[i].vt3].u/128,uvs[faces[i].vt3].v/128)
         elif(len(f.loops)==4):
-            f.loops[0][uv_layer].uv=(uvs[faces[i].vt1].u/256,uvs[faces[i].vt1].v/256)
-            f.loops[1][uv_layer].uv=(uvs[faces[i].vt2].u/256,uvs[faces[i].vt2].v/256)
-            f.loops[2][uv_layer].uv=(uvs[faces[i].vt3].u/256,uvs[faces[i].vt3].v/256)
-            f.loops[3][uv_layer].uv=(uvs[faces[i].vt4].u/256,uvs[faces[i].vt4].v/256)
+            f.loops[0][uv_layer].uv=(uvs[faces[i].vt1].u/128,uvs[faces[i].vt1].v/128)
+            f.loops[1][uv_layer].uv=(uvs[faces[i].vt2].u/128,uvs[faces[i].vt2].v/128)
+            f.loops[2][uv_layer].uv=(uvs[faces[i].vt3].u/128,uvs[faces[i].vt3].v/128)
+            f.loops[3][uv_layer].uv=(uvs[faces[i].vt4].u/128,uvs[faces[i].vt4].v/128)
             
           
     bpy.ops.uv.remove_doubles(threshold=0.08)
@@ -550,8 +546,9 @@ def createRig(name, origin, MCHboneList):
             bone.head = (0,0,0)
             
         else:
-            if ((i==1)|(bname=="neck")|(bname=="head")|(bname=="hair0")|(bname=="hair1")):
-                bone.roll-=math.radians(180)            
+            if ((i==1)|(bname=="neck")|(bname=="head")|(bname[0:4]=="hair")|(bname[0:4]=="cape")|(bname[0:6]=="collar")):
+                bone.roll-=math.radians(180)
+           
             pname=MCHboneList[MCHboneList[i].parent].name            
             parent = amt.edit_bones[pname]
             bone.parent = parent
@@ -655,16 +652,7 @@ def RestPose(mchfile,boneList,char_name):
         pose.rotX=int.from_bytes(mchfile.read(2), byteorder='little')
         pose.rotY=int.from_bytes(mchfile.read(2), byteorder='little')
         pose.rotZ=int.from_bytes(mchfile.read(2), byteorder='little')
-        #negative?
-        '''if(pose.rotX>=0xf000):
-            pose.rotX-=0x10000
-        if(pose.rotY>=0xf000):
-            pose.rotY-=0x10000            
-        if(pose.rotZ>=0xf000):
-            pose.rotZ-=0x10000'''#This is wrong.On 2 bytes range is [-(0x10000-0x8000) , 0x8000]
-            
-            
-            
+
         poseList.append(pose)
          
     #bone name
@@ -726,8 +714,8 @@ def RestPose(mchfile,boneList,char_name):
         "N",3,5,"N","N","N","N","N","N",\
         9,"N","N","N","N","N","N",8,10,\
         13,14,17,18,21,22,"N","N","N",\
-        "N","N","N","N",7,6,"N","N","N",\
-        "N","N","N",12,11,16,15,20,19]
+        "N","N","N","N",6,7,"N","N","N",\
+        "N","N","N",11,12,15,16,19,20]
     elif char_name in ["d015","d016","d017"]:#IRVINE
         BoneSequence=\
         [0,1,2,4,5,11,"N","N","N",\
@@ -754,7 +742,17 @@ def RestPose(mchfile,boneList,char_name):
 				27,28,35,36,39,40,41,"N","N",\
 				"N","N","N","N",10,9,23,31,32,\
 				25,33,34,22,21,30,29,38,37]
-     
+
+    elif char_name in ["d040","d041","d042","d035","d074"]:#EDEA
+        BoneSequence=\
+                [0,1,2,4,"N","N","N","N","N",\
+                "N",3,5,9,12,"N","N","N","N",\
+                10,"N","N","N","N","N","N",8,11,\
+                15,16,19,20,23,24,"N","N","N",\
+                "N","N","N","N",6,7,"N","N","N",\
+                "N","N","N",13,14,17,18,21,22]
+
+
     
     else:
         print("Unknown character.Default bone sequence")
@@ -775,7 +773,6 @@ def RestPose(mchfile,boneList,char_name):
     
     
     for i in range(0,header.BoneCount):   
-        eul=Euler((0,0,0),'YXZ')
         Vec=Vector((0,0,1))
         rotX=poseList[i].rotX
         rotY=poseList[i].rotY
@@ -794,93 +791,112 @@ def RestPose(mchfile,boneList,char_name):
         rotY=math.pi*(rotY)/0x800
         rotZ=math.pi*(rotZ)/0x800
         
-        
+        eul=Euler((rotX,rotY,rotZ),'YXZ')
         if (i==0):
             boneList[i].head=Vector((0,0,0))
             boneList[i].length=Vector((anim.offset[1],anim.offset[0],anim.offset[2])).length
-            boneList[i].tail=Vec*boneList[i].length/256
             
-        else:
-            
-            boneList[i].head=boneList[boneList[i].parent].tail        
-  
-            eul.rotate( Euler((rotX,rotY,rotZ),'YXZ'))
-            
+        else:           
+            boneList[i].head=boneList[boneList[i].parent].tail                    
             if(i==1):
-               eul.rotate_axis('Y',math.radians(-70))
+               eul.rotate_axis('Y',math.radians(-85))
             if(i==2):
-               eul.rotate_axis('Y',math.radians(-95))
-            
+                if rotX>0:
+                    eul.rotate_axis('Y',math.radians(-90))
+                else:
+                    eul.rotate_axis('Y',math.radians(90))
+                    
             if(boneList[i].name=="neck"):
                eul.rotate_axis('Y',math.radians(180))
             
             if(boneList[i].name=="head"):
-               eul.rotate_axis('Y',math.radians(180))
+               eul.rotate_axis('Y',math.radians(170))
                
             
             if(boneList[i].name=="hair0"):
-               eul.rotate_axis('Y',math.radians(100))
+               eul.rotate_axis('Y',math.radians(150))
+               
+            if(boneList[i].name=="hair1"):
+               eul[1]=0
+               
+            if(boneList[i].name=="hair2"):
+                eul[1]=0
+               
+            if(boneList[i].name=="hair3"):
+               eul.rotate_axis('Y',math.radians(-45))
+               
+               
+            if(boneList[i].name=="collar0"):
+               eul.rotate_axis('Y',math.radians(150))
+            if(boneList[i].name=="collar1"):
+               eul.rotate_axis('Y',math.radians(-30))
+               
+            if(boneList[i].name=="cape0"):
+                eul[0]=0
+                eul[1]=0
+                eul[2]=0
+            if(boneList[i].name=="cape1"):
+                eul[0]=0
+                eul[1]=0
+                eul[2]=0
+            
+            #if(boneList[i].name=="cape2"):
+                #eul[0]=0
+            if(boneList[i].name=="cape3"):
+                eul[0]=0
+            if(boneList[i].name=="cape4"):
+                eul[0]=0
+                eul[1]=0
+                eul[2]=0
+            #if(boneList[i].name=="cape5"):
+                #eul[0]=0
+                
+               
             
             if(boneList[i].name=="breast_R"):
-               eul.rotate_axis('Y',math.radians(90))
-               
-           
+                
+                eul.rotate_axis('Y',math.radians(45))
+                eul.rotate_axis('X',math.radians(-10))         
             if(boneList[i].name=="breast_L"):
-               eul.rotate_axis('Y',math.radians(90))
+               eul.rotate_axis('Y',math.radians(45))
+               eul.rotate_axis('X',math.radians(10))
+               eul.rotate_axis('Z',math.radians(180))
             
             if(boneList[i].name=="shoulder_R"):
-               eul.rotate_axis('Y',math.radians(60))
-               eul.rotate_axis('Z',math.radians(120))
+              eul.rotate_axis('Y',math.radians(45))
+              eul.rotate_axis('Z',math.radians(70))
+              eul.rotate_axis('X',math.radians(15))
+              
            
             if(boneList[i].name=="shoulder_L"):
-               eul.rotate_axis('Y',math.radians(60))
-               eul.rotate_axis('Z',math.radians(-120))
-               
-            if(boneList[i].name=="hip_R"):
-               eul.rotate_axis('Y',math.radians(90))
-   
-           
-            if(boneList[i].name=="hip_L"):
-               eul.rotate_axis('Y',math.radians(90))
-           
-            if(boneList[i].name=="thigh_R"):
-               eul.rotate_axis('X',math.radians(90))
-               eul.rotate_axis('Z',math.radians(-90))
-   
-           
-            if(boneList[i].name=="thigh_L"):
-               eul.rotate_axis('X',math.radians(-90))
-               eul.rotate_axis('Z',math.radians(90))
-               
-            if(boneList[i].name=="tibia_R"):
-               eul.rotate_axis('Y',math.radians(-10))
-             
-           
-            if(boneList[i].name=="tibia_L"):
-               eul.rotate_axis('Y',math.radians(-10))
-
-          
-    
-               
-                
+               eul.rotate_axis('Y',math.radians(45))
+               eul.rotate_axis('Z',math.radians(-70))
+               eul.rotate_axis('X',math.radians(-15))
             
+            if(boneList[i].name=="belt1"):
+                eul[1]=0
+            if(boneList[i].name=="hip_R"):
+               eul[1]=0
+               eul[2]=0
+               eul.rotate_axis('Y',math.radians(-20))
+            if(boneList[i].name=="hip_L"):
+                eul[1]=0
+                eul[2]=0
+                eul.rotate_axis('Y',math.radians(-20))
+            if(boneList[i].name=="thigh_R"):
+                eul[0]=0
+                eul[1]=0  
+            if(boneList[i].name=="thigh_L"):
+                eul[0]=0
+                eul[1]=0  
+               
+  
         
-            Vec.rotate(eul)
+        Vec.rotate(eul)
     
-            boneList[i].tail=Vec*boneList[i].length/256+boneList[i].head
-        
-                    
-           
-        
-                
+        boneList[i].tail=Vec*boneList[i].length/256+boneList[i].head
+  
         BoneRotations.append(eul)
-        
-        #removed armature creation here ---19/09/2024--Shunsq
-    
- 
-   
- 
-    
     
     return BoneRotations
 
@@ -888,43 +904,45 @@ def poseRig(armature,boneList,poseList,offset,frame_num):
     bpy.context.view_layer.objects.active = armature
     bpy.ops.object.posemode_toggle()#bpy.ops.object.mode_set(mode='POSE')
     bpy.context.scene.frame_set(frame_num)
+    
   
-    for i in range(0,len(poseList)):
-                
-        pbone = armature.pose.bones[boneList[i].name]
+    for boneID in range(0,len(poseList)):
+        pbone = armature.pose.bones[boneList[boneID].name]   
+        pbone.bone.select=True  
+        
         # Set rotation mode to Euler XYZ, easier to understand
-        # than default quaternions 
-      
-        rX=math.pi *poseList[i].rotX/0x800
-        rY=math.pi *poseList[i].rotY/0x800
-        rZ=math.pi *poseList[i].rotZ/0x800
+                # than default quaternions
+              
+        rX=math.pi *poseList[boneID].rotX/0x800
+        rY=math.pi *poseList[boneID].rotY/0x800
+        rZ=math.pi *poseList[boneID].rotZ/0x800        
         
-        
-        pbone.rotation_mode='YXZ'     
-        pbone.rotation_euler=Euler([-rX,-rY,rZ],'YXZ')# or [-rX,rY,-rZ] or [rX,rY,rZ] or [-rX,-rY,rZ] or [rX,-rY,-rZ] in 'YXZ' mode
+        pbone.rotation_mode='YXZ' 
+        pbone.rotation_euler=Euler([-rX,-rY,rZ],'YXZ')
         
         #insert a keyframe
-        if(i==0):
+        if(boneID==0):
             pbone.rotation_euler=Euler([0,0,0])
             #in pose mode Y is along bone direction, Z is forward
             
             locX=offset[0]
             locY=offset[1]
             locZ=offset[2]
-            pbone.bone.select=True
-            pbone.location=Vector((locX,(locZ-boneList[i].length/256),locY))
+            
+            
+            pbone.location=Vector((locY,(locZ-boneList[boneID].length/256),locX))
             pbone.keyframe_insert(data_path="location" ,frame=frame_num)
-            pbone.bone.select=False
             
             
         
         #BEWARE--ROTATION ARE ALONG PARENT BONE AXIS, NOT CURRENT BONE LOCAL AXIS
         
         
-        elif(i==2):
+        elif(boneID==2):
 
             pbone.rotation_euler.rotate(   Euler  ((0,0,math.radians(-90)),'YXZ'))
-        elif(i==1):
+        elif(boneID==1):
+                    
             pbone.rotation_euler.rotate(   Euler  ((math.radians(180),0,0),'YXZ'))
             pbone.rotation_euler.rotate(   Euler  ((0,0,math.radians(-90)),'YXZ'))
  
@@ -947,6 +965,8 @@ def poseRig(armature,boneList,poseList,offset,frame_num):
     bpy.ops.object.mode_set(mode='OBJECT')
     bpy.context.scene.frame_set(0)
     
+    return
+    
     
 
 def CreateAction(armature,boneList,anim):
@@ -961,10 +981,14 @@ def CreateAction(armature,boneList,anim):
         armature.keyframe_insert(data_path="rotation_euler" ,frame=0)
         armature.animation_data.action=bpy.data.actions["before"]    
         tempName=armature.animation_data.action.name
-        bpy.data.actions[tempName].name=anim.name           
+        bpy.data.actions[tempName].name=anim.name   
+        
+        
+               
         for i in range(0,anim.frameCount):
             curFrame=anim.frameList[i]
-            poseRig(armature,boneList,curFrame.poseList,curFrame.Offset,i)                   
+            poseRig(armature,boneList,curFrame.poseList,curFrame.Offset,i)
+                             
         bpy.ops.object.mode_set(mode='OBJECT')
               
     return  
@@ -1028,9 +1052,7 @@ def Retarget(arm_to_copy,arm_retarget,anim):
         bpy.context.scene.frame_set(0) 
     
     bpy.ops.object.mode_set(mode='OBJECT')
-              
-        
-
+  
     return
 def ReadAnim(boneList,onefile,char_name):
     """Returns a list of animations. An animation is a list of frames. A frame is a pose list of a bone list."""
@@ -1080,12 +1102,7 @@ def ReadAnim(boneList,onefile,char_name):
                 offy=int.from_bytes(onefile.read(2),byteorder='little')
                 offx=int.from_bytes(onefile.read(2),byteorder='little')
                 offz=int.from_bytes(onefile.read(2),byteorder='little')
-                '''if(offx>0xf000):
-                    offx-=0x10000
-                if(offy>0xf000):
-                    offy-=0x10000
-                if(offz>0xf000):
-                    offz-=0x10000'''#wrong
+                
                     
                 if(offx>0x8000):
                     offx-=0x10000
@@ -1097,6 +1114,7 @@ def ReadAnim(boneList,onefile,char_name):
                     
                 frame.Offset=Vector((offx/256,offy/256,offz/256))
                 for k in range(0,anim.boneCount):
+    
                     pose=MchPose_class()
                     
                     #Vehek 2 qhimm
@@ -1108,14 +1126,9 @@ def ReadAnim(boneList,onefile,char_name):
                     pose.rotZ=((byte_1)|((byte_4&3)<<8))<<2
                     pose.rotX=((byte_2)|((byte_4&0xc)<<6))<<2
                     pose.rotY=((byte_3)|((byte_4&0x30)<<4))<<2
-                    #  on 12 bits. Range is [-2048 ,2048] , negative numbers if >0x800
                     
-                    '''if (pose.rotX>=0xf00):
-                        pose.rotX-=0x1000
-                    if (pose.rotY>=0xf00):
-                        pose.rotY-=0x1000
-                    if (pose.rotZ>=0xf00):
-                        pose.rotZ-=0x1000'''#wrong
+    
+      
                         
                     if (pose.rotX>=0x800):
                         pose.rotX-=0x1000
@@ -1126,14 +1139,16 @@ def ReadAnim(boneList,onefile,char_name):
                     
                     frame.poseList.append(pose)
                 anim.frameList.append(frame)
-                       
+            
+            
+                          
             CreateAction(armature_raw,boneList,anim)
         
             #Retarget the animation on the restpose armature
             Retarget(armature_raw,armature_rest,anim)
             #Delete the raw animation
             act=bpy.data.actions[anim.name]
-            act.user_clear()
+            #act.user_clear()
             bpy.data.actions.remove(act)
             #Rename the new animation and keep it in memory
             bpy.data.actions[anim.name+"re"].name=anim.name
@@ -1178,15 +1193,16 @@ def TIM_TO_BLEND(inputfile,name):
     
     inputfile.seek(0,0)
     texoffset=0
-    tex_image=bpy.data.images.new("{}".format(name),256,256)#original texture is 256x256
+    
     
     for i in range(0,texcount):
+        tex_image=bpy.data.images.new("{}-{}".format(name,i),128,128)#original texture is 128x128
         colordepth=0
         inputfile.seek(i*4,0)
         texoffset=int.from_bytes(inputfile.read(3), byteorder='little')
         inputfile.seek(texoffset+4,0)#skip0x10000000
         colordepth=int.from_bytes(inputfile.read(4), byteorder='little')
-        print("texture {} TIM colordepth:{}".format(i,hex(colordepth)))
+
         
         #-------PALETTE IF 4-bit or 8-bit image----------
         if(colordepth==0x08) or (colordepth==0x09):
@@ -1197,7 +1213,6 @@ def TIM_TO_BLEND(inputfile,name):
             palette.y=int.from_bytes(inputfile.read(2), byteorder='little')
             palette.pixH=int.from_bytes(inputfile.read(2), byteorder='little')
             palette.pixV=int.from_bytes(inputfile.read(2), byteorder='little')
-            print("Palette size: {} x {}".format(palette.pixH,palette.pixV))
             
             #Convert 1 line of 256 pix into 16 pix x 16 pix image
             palette_image=bpy.data.images.new("palette{}".format(i),16,16)
@@ -1232,54 +1247,44 @@ def TIM_TO_BLEND(inputfile,name):
         image.y=int.from_bytes(inputfile.read(2), byteorder='little')
         image.pixH=int.from_bytes(inputfile.read(2), byteorder='little')
         image.pixV=int.from_bytes(inputfile.read(2), byteorder='little')
-        print("Image size: {} x {}".format(image.pixH,image.pixV))
-            
         
-        if colordepth==0x08:#4-bit
-            palette_image=bpy.data.images["palette{}".format(i)]
+        pix_size=0#changes if texture is 4-bit or 8-bit
             
-            for pix in range(0,image.pixH*image.pixV*4):
-                color=0
-                color=int.from_bytes(inputfile.read(2), byteorder='little')
-                R=palette_image.pixels[color*4]
-                G=palette_image.pixels[color*4+1]
-                B=palette_image.pixels[color*4+2]
-                A=palette_image.pixels[color*4+3]
+        pix_line=0
+        pix_column=0
+        npix=0
+        
+        palette_image=bpy.data.images["palette{}".format(i)] 
                 
-                if (R!=0) or (G!=0) or (B!=0):
-                    A=1
-                
-                tex_image.pixels[pix*4]=R
-                tex_image.pixels[pix*4+1]=G
-                tex_image.pixels[pix*4+2]=B
-                tex_image.pixels[pix*4+3]=A
-                
+        if colordepth==0x08:#4-bit
+            pix_size=2
+       
         elif colordepth==0x09:#8-bit
-            palette_image=bpy.data.images["palette{}".format(i)]
-            print("teximage size {}x{}".format(tex_image.size[0],tex_image.size[1]))
-            pix=0
-            pix_offset=0
-            pix_modulo=0
-            pix_scaled=0
-            for pix in range(0,image.pixH*image.pixV*2):
-                color=0
-                color=int.from_bytes(inputfile.read(1), byteorder='little')
-                R=palette_image.pixels[color*4]
-                G=palette_image.pixels[color*4+1]
-                B=palette_image.pixels[color*4+2]
-                A=palette_image.pixels[color*4+3]
-                if (R!=0) or (G!=0) or (B!=0):
-                    A=1    
-                pix_modulo=pix%128
-                if ( (pix_modulo==0) and pix>0):
-                    pix_offset+=1
-                pix_scaled=i*128*256+pix_modulo+256*pix_offset
-                tex_image.pixels[pix_scaled*4]=R
-                tex_image.pixels[pix_scaled*4+1]=G
-                tex_image.pixels[pix_scaled*4+2]=B
-                tex_image.pixels[pix_scaled*4+3]=A
+            pix_size=1
 
-    return 
+        for pix in range(0,image.pixH*image.pixV*pix_size*2):
+            color=0
+            color=int.from_bytes(inputfile.read(pix_size), byteorder='little')
+            R=palette_image.pixels[color*4]
+            G=palette_image.pixels[color*4+1]
+            B=palette_image.pixels[color*4+2]
+            A=palette_image.pixels[color*4+3]
+            if (R!=0) or (G!=0) or (B!=0):
+                A=1    
+            pix_column=pix%128
+            
+            pix_line=127-math.floor(pix/128)
+                
+            npix=pix_column+128*(pix_line)
+            
+            tex_image.pixels[npix*4]=R
+            tex_image.pixels[npix*4+1]=G
+            tex_image.pixels[npix*4+2]=B
+            tex_image.pixels[npix*4+3]=A
+        
+        tex_image.use_fake_user= True
+
+    return texcount
 
 def MCH_TO_BLEND(context,directory=""):
     #----OLD CODE ---05/10/2024-----
@@ -1366,7 +1371,6 @@ def MCH_TO_BLEND(context,directory=""):
     inputfile.seek(header.ModelAddress+header.FOffset)
     Flist=[]
     UVlist=[]
-    
     for i in range(header.FCount):
         inputfile.seek(header.ModelAddress+header.FOffset+i*64,0)
         fa=MchFace_class()
@@ -1374,22 +1378,33 @@ def MCH_TO_BLEND(context,directory=""):
         fa.is_tri=int.from_bytes(inputfile.read(4), byteorder='little')
         inputfile.seek(8,1)
         fa.v2=int.from_bytes(inputfile.read(2), byteorder='little')
-        fa.v3=int.from_bytes(inputfile.read(2), byteorder='little')
         fa.v1=int.from_bytes(inputfile.read(2), byteorder='little')
+        fa.v3=int.from_bytes(inputfile.read(2), byteorder='little')
         fa.v4=int.from_bytes(inputfile.read(2), byteorder='little')
         inputfile.seek(24,1)
         
         for j in range(4):#same order as face vertices(v2,v3,v1,v4)
             u=int.from_bytes(inputfile.read(1), byteorder='little')
-            v=int.from_bytes(inputfile.read(1), byteorder='little')           
+            v=int.from_bytes(inputfile.read(1), byteorder='little')
+            
+            #invert V coordinate
+            v=128-v
+                      
             UVlist.append(MchUV_class(u,v))
+
         
         #skip 2 unknown bytes from actual position
         inputfile.seek(2,1)
         fa.texgroup=int.from_bytes(inputfile.read(2), byteorder='little')
         #offset uvs by texture group
+        
+        tgroup=[0,0]
+        tgroup[0]=math.floor(fa.texgroup/2)
+        tgroup[1]=fa.texgroup%2
         for j in range(4):
-            UVlist[4*i+j].v+=fa.texgroup*0x80
+            UVlist[4*i+j].v+=tgroup[1]*128
+            UVlist[4*i+j].u+=tgroup[0]*128
+        
     
     
        
@@ -1412,9 +1427,9 @@ def MCH_TO_BLEND(context,directory=""):
             if (UVlist[j]==UVlist_redundant[4*i]):
                 Flist[i].vt2=j
             if (UVlist[j]==UVlist_redundant[4*i+1]):
-                Flist[i].vt3=j
-            if (UVlist[j]==UVlist_redundant[4*i+2]):
                 Flist[i].vt1=j
+            if (UVlist[j]==UVlist_redundant[4*i+2]):
+                Flist[i].vt3=j
             if (UVlist[j]==UVlist_redundant[4*i+3]):
                 Flist[i].vt4=j
     #Draw the raw model in blender
@@ -1423,26 +1438,83 @@ def MCH_TO_BLEND(context,directory=""):
     
     
     #-----Associate material-------
-    TIM_TO_BLEND(inputfile,header.char_name)
+    texcount=TIM_TO_BLEND(inputfile,header.char_name)
     mat=bpy.data.materials.new(header.char_name)
     bpy.data.objects["{}".format(header.char_name)].data.materials.append(mat)
     mat.use_nodes=True
+    mat.blend_method='HASHED'
     output_node=mat.node_tree.nodes["Material Output"]
     uv_node=mat.node_tree.nodes.new("ShaderNodeUVMap")
-    tex_node=mat.node_tree.nodes.new("ShaderNodeTexImage")
-    tex_node.image=bpy.data.images[header.char_name]
     shader_node=mat.node_tree.nodes["Principled BSDF"]
-    mat.node_tree.links.new(uv_node.outputs[0], tex_node.inputs[0])
-    mat.node_tree.links.new(tex_node.outputs[0], shader_node.inputs[0])
-    mat.node_tree.links.new(tex_node.outputs[1], shader_node.inputs[18])
-    
     shader_node.location[0]=output_node.location[0]-300
     shader_node.location[1]=output_node.location[1]
-    tex_node.location[0]=shader_node.location[0]-200
-    tex_node.location[1]=shader_node.location[1]
-    uv_node.location[0]=tex_node.location[0]-300
-    uv_node.location[1]=tex_node.location[1]
+    uv_node.location[0]=shader_node.location[0]-1000
+    uv_node.location[1]=shader_node.location[1]
     
+    
+    
+    for tcount in range ( texcount):
+   
+        tex_node=mat.node_tree.nodes.new("ShaderNodeTexImage")
+        tex_node.image=bpy.data.images["{}-{}".format(header.char_name,tcount)]
+        tex_node.extension='CLIP'
+        tex_node.location[0]=shader_node.location[0]-500
+        tex_node.location[1]=shader_node.location[1]- tcount*500
+        tex_node.name="texture{}".format(tcount)
+        
+        mapping_node=mat.node_tree.nodes.new("ShaderNodeMapping")
+        mapping_node.vector_type='TEXTURE'
+        mapping_node.inputs[1].default_value[1]=tcount
+        mapping_node.location[0]=tex_node.location[0]-200
+        mapping_node.location[1]=tex_node.location[1]
+        mapping_node.name="mapping{}".format(tcount)
+        
+        mat.node_tree.links.new(uv_node.outputs[0], mapping_node.inputs[0])
+        mat.node_tree.links.new(mapping_node.outputs[0], tex_node.inputs[0])
+        
+        if tcount>0:
+            mix_node=mat.node_tree.nodes.new("ShaderNodeMix")
+            mix_node.blend_type='EXCLUSION'
+            mix_node.data_type='RGBA'
+            mix_node.inputs[0].default_value=1.0
+            mix_node.location[0]=tex_node.location[0]+300
+            mix_node.location[1]=tex_node.location[1]+300
+            mix_node.name="mix{}".format(tcount)
+            
+            alpha_node=mat.node_tree.nodes.new("ShaderNodeMix")
+            alpha_node.blend_type='EXCLUSION'
+            alpha_node.data_type='RGBA'
+            alpha_node.inputs[0].default_value=1.0
+            alpha_node.location[0]=mix_node.location[0]
+            alpha_node.location[1]=mix_node.location[1]-200
+            alpha_node.name="alpha{}".format(tcount)
+            
+            if tcount==1:
+                p_node=mat.node_tree.nodes["texture0"]
+                mat.node_tree.links.new(p_node.outputs["Color"], mix_node.inputs["A"])
+                mat.node_tree.links.new(p_node.outputs["Alpha"], alpha_node.inputs["A"])
+            else:
+                p_node=mat.node_tree.nodes["mix{}".format(tcount-1)]
+                pa_node=mat.node_tree.nodes["mix{}".format(tcount-1)]
+                
+                mat.node_tree.links.new(p_node.outputs["Result"], mix_node.inputs["A"])  
+                mat.node_tree.links.new(pa_node.outputs["Result"], alpha_node.inputs["A"])
+                
+            mat.node_tree.links.new(tex_node.outputs["Color"], mix_node.inputs["B"])
+            mat.node_tree.links.new(tex_node.outputs["Alpha"], alpha_node.inputs["B"])
+        
+    if texcount==1:
+        last_node=mat.node_tree.nodes["texture0"]
+        mat.node_tree.links.new(last_node.outputs[0], shader_node.inputs["Base Color"])
+        mat.node_tree.links.new(last_node.outputs[1], shader_node.inputs["Alpha"])
+        
+    else:
+        last_node=mat.node_tree.nodes["mix{}".format(texcount-1)]
+        lasta_node=mat.node_tree.nodes["alpha{}".format(texcount-1)]
+        mat.node_tree.links.new(last_node.outputs["Result"], shader_node.inputs["Base Color"])
+        mat.node_tree.links.new(lasta_node.outputs["Result"], shader_node.inputs["Alpha"])
+        
+
     
     #Read skeleton
     BoneRotations=[]
@@ -1461,6 +1533,7 @@ def MCH_TO_BLEND(context,directory=""):
      
     bpy.context.view_layer.objects.active=armature_rest
 
+
     #create raw armature( for charaone ) 
     rawbonelist=[]
     for i in range(0,header.BoneCount):
@@ -1471,12 +1544,28 @@ def MCH_TO_BLEND(context,directory=""):
     
     for i in range(0,header.BoneCount):   
         Vec=Vector((0,0,1))
+        eul=Euler((0,0,0),'YXZ')
+        
+        if char_name in(["d000","d001","d002","d003","d004","d005","d006","d007",\
+                        "d018","d019","d020","d021","d022","d023","d024","d025",\
+                        "d026","d049","d050","d051","d052","d053","d075",\
+                        "d032","d033","d034","d035","d036","d037","d065",\
+                        "d040","d041","d042","d074"]):
+            if(i==0):
+                Vec=Vector((-1,0,0))
+            else:
+                Vec=Vector((0,-1,0))
+            Vec.rotate(eul)
+
+
         rawbonelist[i].tail=Vec*rawbonelist[i].length/256+rawbonelist[rawbonelist[i].parent].tail
         rawbonelist[i].head=rawbonelist[rawbonelist[i].parent].tail
     
-    createRig(char_name+"_armature_raw",Vector((0,0,0)),rawbonelist) 
+    createRig(char_name+"_armature_raw",Vector((0,0,0)),rawbonelist)
+     
     armature_raw=bpy.context.scene.objects[char_name+"_armature_raw"]
     bpy.context.view_layer.objects.active=armature_raw
+    armature_raw.rotation_euler.rotate_axis('Y',math.radians(90))
     
     #END----Create armature---19/09/2024---Shunsq
     #--------------------------------------------
@@ -1561,6 +1650,12 @@ def MCH_TO_BLEND(context,directory=""):
     mod.use_vertex_groups = True
     inputfile.close()
     print("File closed")
+    for area in bpy.context.screen.areas: 
+        if area.type == 'VIEW_3D':
+            for space in area.spaces: 
+                if space.type == 'VIEW_3D':
+                    space.shading.type = 'MATERIAL'
+    
 
     return
 
@@ -1621,7 +1716,7 @@ def BLEND_TO_MCH(context,directory=""):
     
     
     
-    #Get info from blend file
+   #Get info from blend file
     Vcount=0
     Fcount=0
     Quadcount=0
@@ -1647,11 +1742,57 @@ def BLEND_TO_MCH(context,directory=""):
     Bone_count=len(skl.data.bones)
     
     print("Exporting {}\nVcount:{} Fcount:{} UVcount:{} Vgroups:{} Bones:{}".format(header.char_name,Vcount,Fcount,UVcount,Vgroup_count,Bone_count))
+       
+    #----New model should share same skeleton, same texture count,same texture animation location
+    #----New model real texture will be called with tonberry/FFnx plugin by detecting old texture
+    
+    #---COPY TEXTURES OFFSETS AND MAPS---
+    #--------------------------------------
+    inputfile.seek(0,0)
+    texoffset=0
+    texcount=0
+    toread=0
+    while toread!=0xFFFFFF:
+        toread=int.from_bytes(inputfile.read(3), byteorder='little')
+        inputfile.seek(1,1)#skip 1 byte
+        if toread!=0xFFFFFF:
+            texcount+=1
+            texoffset=toread
+            print("texcount:{} , texoffset:{}\n".format(texcount,texoffset))
+            outputfile.write(toread.to_bytes(3,'little'))
+            outputfile.write(b'\x00')
+ 
+    tsize=header.ModelAddress-texoffset#tesoffset is last texture
+    newaddress=texoffset+tsize
+    for dup in range (4-texcount): #duplicate texture to fully use 4 quadrants
+        outputfile.write(newaddress.to_bytes(3,'little'))
+        outputfile.write(b'\x00')
+        newaddress+=tsize
+        
+    #end code
+    endcode=0xFFFFFFFF
+    outputfile.write(endcode.to_bytes(4,'little'))
+    #new model address
+    outputfile.write(newaddress.to_bytes(4,'little'))
+    
+    #copy original textures
+    inputfile.seek(0,0)
+    ftexoffset=int.from_bytes(inputfile.read(4),byteorder='little')#1st texture offset
+    inputfile.seek(ftexoffset,0)
+   
+    
+    outputfile.seek(ftexoffset,0)#padding until 1st texture
+    outputfile.write(inputfile.read(header.ModelAddress - ftexoffset))
+
+    #duplicate texture to fully use 4 quadrants    
+    for dup in range (4-texcount): 
+        inputfile.seek(texoffset,0)#last texture offset
+        outputfile.write(inputfile.read(tsize))
     
     #----NEW HEADER-------
     newheader=MchHeader_class()
     newheader.char_name=header.char_name
-    newheader.ModelAddress=header.ModelAddress
+    newheader.ModelAddress=newaddress
     newheader.BoneCount=header.BoneCount
     newheader.VCount=Vcount
     newheader.TexAnimSize=header.TexAnimSize#we keep the same number of frames
@@ -1674,19 +1815,8 @@ def BLEND_TO_MCH(context,directory=""):
     
     print("{}".format(newheader))
     
-   
-
-    #--------------------------------------------
-    #----UPDATE from 17/09/2024 starts here------
-    #-------------------------------------------- 
     
-    #----New model should share same skeleton, same texture count,same texture animation location
-    #----New model real texture will be called with tonberry/FFnx plugin by detecting old texture
     
-    #---COPY TEXTURES OFFSETS AND MAPS---
-    #--------------------------------------
-    inputfile.seek(0,0)
-    outputfile.write(inputfile.read(header.ModelAddress))
     
     #---COPY BONE COUNT---
     inputfile.seek(header.ModelAddress,0)
@@ -1874,9 +2004,9 @@ def BLEND_TO_MCH(context,directory=""):
     print("max vert ID :{}\n".format(hex(max(Vinvert)),'08x'))
                         
     countface=0
+    
     for face in char_ob.data.polygons:#is tri?
-        
-        texgroup=[0,0]# MAX_TEXSIZE = 2048 so 16x16 texture groups max
+        texgroup=[0,0]# MAX_TEXSIZE = 2048 so 16x16 texture groups max  
         UVcoords=[[0.0,0.0],[0.0,0.0],[0.0,0.0],[0.0,0.0]]
         istri=0
         vcol=0
@@ -1926,65 +2056,46 @@ def BLEND_TO_MCH(context,directory=""):
             outputfile.write(vcol.to_bytes(4,'little'))
 
         #--UVs                  
-        for loopnum in range(0,len(face.loop_indices)):
+         
+        for loopnum in range(len(face.loop_indices)):
+        
             loopID=face.loop_indices[loopnum]
-            #loop_mesh = me.loops[loopnum]
-            loop_uv=uv_layer.data[loopID]
-            #loop_vert=me.vertices[loop_mesh.vertex_index]
+            loop_uv = uv_layer.data[loopID]
+  
+          
+            texgroup[0]=max(texgroup[0],math.floor(loop_uv.uv[0]))
+            texgroup[1]=max(texgroup[1],math.floor(loop_uv.uv[1]))
             
+            UVcoords[loopnum][0]=(loop_uv.uv[0]-texgroup[0])*MAX_TEXSIZE
+            UVcoords[loopnum][1]=(loop_uv.uv[1]-texgroup[1])*MAX_TEXSIZE
+            
+            #invert V coordinate
+            UVcoords[loopnum][1]=MAX_TEXSIZE-UVcoords[loopnum][1]
+            
+            #divide coordinate by 2 to fit 128x128 pix
+            #UVcoords[loopnum][0]=math.floor(UVcoords[loopnum][0]/2)
+            #UVcoords[loopnum][1]=math.floor(UVcoords[loopnum][1]/2)
+ 
+            
+        outputfile.write(int(UVcoords[1][0]).to_bytes(1,'little'))
+        outputfile.write(int(UVcoords[1][1]).to_bytes(1,'little'))
+        outputfile.write(int(UVcoords[0][0]).to_bytes(1,'little'))
+        outputfile.write(int(UVcoords[0][1]).to_bytes(1,'little'))
+        outputfile.write(int(UVcoords[2][0]).to_bytes(1,'little'))
+        outputfile.write(int(UVcoords[2][1]).to_bytes(1,'little'))
         
         if len(face.vertices)<4:#triangle
-            for loopnum in range(len(face.loop_indices)):
-            
-                loopID=face.loop_indices[loopnum]
-                 #loop_mesh = me.loops[loopnum] 
-                loop_uv = uv_layer.data[loopID]
-                 #loop_vert=me.vertices[loop_mesh.vertex_index]
-                 
-                texgroup[0]=math.floor(loop_uv.uv[0]*MAX_TEXSIZE/256)
-                texgroup[1]=math.floor(loop_uv.uv[1]*MAX_TEXSIZE/256)
-            
-                #offset coordinates by texgroup
-                UVcoords[loopnum][0]=loop_uv.uv[0]*MAX_TEXSIZE -texgroup[0]*256
-                UVcoords[loopnum][1]=loop_uv.uv[1]*MAX_TEXSIZE -texgroup[1]*256
-                
-            outputfile.write(int(UVcoords[1][0]).to_bytes(1,'little'))
-            outputfile.write(int(UVcoords[1][1]).to_bytes(1,'little'))
-            outputfile.write(int(UVcoords[0][0]).to_bytes(1,'little'))
-            outputfile.write(int(UVcoords[0][1]).to_bytes(1,'little'))
-            outputfile.write(int(UVcoords[2][0]).to_bytes(1,'little'))
-            outputfile.write(int(UVcoords[2][1]).to_bytes(1,'little'))
             outputfile.write(b'\x00' * 2)#skip 2 bytes
-            
-        else:
-            for loopnum in range(len(face.loop_indices)):
-            
-                loopID=face.loop_indices[loopnum]
-                 #loop_mesh = me.loops[loopnum] 
-                loop_uv = uv_layer.data[loopID]
-                 #loop_vert=me.vertices[loop_mesh.vertex_index]
-                 
-                texgroup[0]=math.floor(loop_uv.uv[0]*MAX_TEXSIZE/256)
-                texgroup[1]=math.floor(loop_uv.uv[1]*MAX_TEXSIZE/256)
-            
-                #offset coordinates by texgroup
-                UVcoords[loopnum][0]=loop_uv.uv[0]*MAX_TEXSIZE -texgroup[0]*256
-                UVcoords[loopnum][1]=loop_uv.uv[1]*MAX_TEXSIZE -texgroup[1]*256
-                
-            outputfile.write(int(UVcoords[1][0]).to_bytes(1,'little'))
-            outputfile.write(int(UVcoords[1][1]).to_bytes(1,'little'))
-            outputfile.write(int(UVcoords[0][0]).to_bytes(1,'little'))
-            outputfile.write(int(UVcoords[0][1]).to_bytes(1,'little'))
-            outputfile.write(int(UVcoords[2][0]).to_bytes(1,'little'))
-            outputfile.write(int(UVcoords[2][1]).to_bytes(1,'little'))
+        else:#square
             outputfile.write(int(UVcoords[3][0]).to_bytes(1,'little'))
             outputfile.write(int(UVcoords[3][1]).to_bytes(1,'little'))
+            
         
         outputfile.write(b'\x00' * 2)#skip 2 bytes
+            
         
-        #--texture group of 256pix *256pix. In our case, MAX_TEXSIZE is 2048*2048, so 8x8 texture groups 
-        outputfile.write(int(texgroup[0]).to_bytes(1,'little'))
-        outputfile.write(int(texgroup[1]).to_bytes(1,'little'))
+        #--texture group of 128pix *128pix.
+        outputfile.write((2*texgroup[0]+texgroup[1]).to_bytes(2,'little'))
         outputfile.write(b'\x00' * 8)#skip 8 bytes
         countface+=1
         
@@ -2057,383 +2168,7 @@ def BLEND_TO_MCH(context,directory=""):
 
     return
     
-def FIELD_TO_60FPS(context,directory=""):
-   
-    #----OLD CODE ---05/10/2024-----
-    #--------------------------------
-    #cur_dir=bpy.path.abspath("//")
-    #indir_name=''.join([cur_dir,"INPUT\\"])
-    #outdir_name=''.join([cur_dir,"OUTPUT\\"]) 
-    #one_found=0
-    
-    #filelist=[entity for entity in os.listdir(indir_name)]#create list
-    #for entity in filelist:
-        #(filename, extension) = os.path.splitext(entity)
-        #if extension==".one":
-            #one_found=1
-            #curr_one_name=filename
-            #break
-    #if one_found==0:
-        #print("No chara.one file found\n")
-        #return
-        
-    #inputpath=''.join([indir_name,entity])
-    #print("input {}\n".format(inputpath))
-    #inputfile=open(inputpath,"rb")
-    
-    #outputpath=''.join([outdir_name,filename,'-new.one'])
-    #print("output {}\n".format(outputpath))
-    #outputfile=open(outputpath,"wb")#read and write mode to modify locally the file
-    
-    one_found=0
-    
-    filelist=[entity for entity in os.listdir(directory)]#create list
-    for entity in filelist:
-        (filename, extension) = os.path.splitext(entity)
-        if extension==".one":
-            one_found=1
-            curr_one_name=filename
-            break
-    print("{} one file found\n".format(curr_one_name))
-   
-    inputpath=''.join([directory,curr_one_name,".one"])
-    outputpath=''.join([directory,curr_one_name,"-new.one"])
-    
-    inputfile=open(inputpath,"rb")
-    
-    outputfile=open(outputpath,"wb")
-    
-    
-    
-    '''This value controls the number of intermediate frames to create'''
-    F_INTER=1# Between 2 frames, we interpolate F_INTER frames
-    
-    
-    charCount=0
-    
-    
-    #copy some info from original file
-    #----------------------------------
-    inputfile.seek(0,0)
-    charCount=int.from_bytes(inputfile.read(4),byteorder='little')
-    print("{} characters".format(charCount))
-    outputfile.write(charCount.to_bytes(4,'little'))
-    
-    ModelAddress=[ 0 for char in range(charCount) ]
-    ModelSize=[ 0 for char in range(charCount) ]
-    ModelHasTim=[ 0 for char in range(charCount) ]#if <=0xd0000000 then it's a NPC with textures. Starting here, it is smae format as MCH for NPC
-    ModelTimOffset=[ 0 for char in range(charCount) ]#texture address endcode for NPC, just like MCH
-    ModelOffset=[ 0 for char in range(charCount) ]# 0 for main chars, because no texure in charaone. modelAddress for NPC; because textures are in charaone
-    ModelName=[ "" for char in range(charCount) ]
-    ModelAnimCount=[ 0 for char in range(charCount) ]
-    Address_in_file=[ 0 for char in range(charCount) ]#To change later address and size if animations have changed
-    
-    for charID in range(charCount):
-        ModelAddress[charID]=int.from_bytes(inputfile.read(4),byteorder='little')
-        ModelSize[charID]=int.from_bytes(inputfile.read(4),byteorder='little')
-        
-        
-        inputfile.seek(4,1)#Model size duplicate ?
-        
-        ModelHasTim[charID]=int.from_bytes(inputfile.read(4),byteorder='little')
-        if ModelHasTim[charID]<=0xd0000000:
-            ModelTimOffset[charID]=int.from_bytes(inputfile.read(4),byteorder='little')#always 01800140
-        ModelOffset[charID]=int.from_bytes(inputfile.read(4),byteorder='little')
-        ModelName[charID]=inputfile.read(4).decode(encoding="cp437")
-         
-        endcode=int.from_bytes(inputfile.read(8),byteorder='little')# changes depending on the field
-        
-        Address_in_file[charID]=outputfile.tell()#will be used later to change address and size  
-        outputfile.write(ModelAddress[charID].to_bytes(4,'little'))
-       
-        
-        outputfile.write(ModelSize[charID].to_bytes(4,'little'))
-        outputfile.write(ModelSize[charID].to_bytes(4,'little'))#duplicate of model size
-        outputfile.write(ModelHasTim[charID].to_bytes(4,'little'))
-        if ModelHasTim[charID]<=0xd0000000:
-            outputfile.write(ModelTimOffset[charID].to_bytes(4,'little'))
-        outputfile.write(ModelOffset[charID].to_bytes(4,'little'))
-        
-        outputfile.write(ModelName[charID].encode('ascii'))
-        
-        outputfile.write(endcode.to_bytes(8,'little'))
-        
-    padding=ModelAddress[0]+4 - outputfile.tell()
-    outputfile.write(b'\x00'*padding)# list of zeroes before model
-    
-    outputfile.close()
-    outputfile=open(outputpath,"r+b")#read and write mode to modify locally the file
-    outputfile.read()#go to end of file
-    
-    
-    
-    #Write the animations
-    for charID in range(charCount):
-        New_address=outputfile.tell()-4
-        print("Old address was {} New address is {}\n".format(hex(ModelAddress[charID]),hex(New_address),'08x'))
-             
-        inputfile.seek(ModelAddress[charID]+4,0)
-        NPC_boneCount=0
-        NPC_VCount=0
-        NPC_TexAnimSize=0
-        NPC_FCount=0
-        NPC_Unk1Count=0
-        NPC_ObCount=0
-        NPC_Unk2Count=0
-        NPC_TriCount=0
-        NPC_QuadCount=0
-        NPC_BoneOffset=0
-        NPC_VOffset=0
-        NPC_TexAnimOffset=0
-        NPC_FOffset=0
-        NPC_Unk1Offset=0
-        NPC_ObOffset=0
-        NPC_AnimOffset=0
-        NPC_Unk2Offset=0#Always 0x01800140
-        
-        NPC_Address=0
-  
-        if ModelHasTim[charID]<=0xd0000000:# NPC
-            #copy texture until ModelOffset
-            outputfile.write(inputfile.read(ModelOffset[charID]))
-            
-            #copy NPC 3D model MCH
-            NPC_Address=ModelAddress[charID]+4 + ModelOffset[charID]
-            inputfile.seek(NPC_Address,0)
-            
-            #do here same operations as mch2blend
-            NPC_boneCount=int.from_bytes(inputfile.read(4), byteorder='little')
-            NPC_VCount=int.from_bytes(inputfile.read(4), byteorder='little')
-            NPC_TexAnimSize=int.from_bytes(inputfile.read(4), byteorder='little')
-            NPC_FCount=int.from_bytes(inputfile.read(4), byteorder='little')
-            NPC_Unk1Count=int.from_bytes(inputfile.read(4), byteorder='little')
-            NPC_ObCount=int.from_bytes(inputfile.read(4), byteorder='little')
-            NPC_Unk2Count=int.from_bytes(inputfile.read(4), byteorder='little')
-            NPC_TriCount=int.from_bytes(inputfile.read(2), byteorder='little')
-            NPC_QuadCount=int.from_bytes(inputfile.read(2), byteorder='little')
-            NPC_BoneOffset=int.from_bytes(inputfile.read(4), byteorder='little')
-            NPC_VOffset=int.from_bytes(inputfile.read(4), byteorder='little')
-            NPC_TexAnimOffset=int.from_bytes(inputfile.read(4), byteorder='little')
-            NPC_FOffset=int.from_bytes(inputfile.read(4), byteorder='little')
-            NPC_Unk1Offset=int.from_bytes(inputfile.read(4), byteorder='little')
-            NPC_ObOffset=int.from_bytes(inputfile.read(4), byteorder='little')
-            NPC_AnimOffset=int.from_bytes(inputfile.read(4), byteorder='little')
-            NPC_Unk2Offset=int.from_bytes(inputfile.read(4), byteorder='little')#Always 0x01800140
-            
-            
-            #skip header + anything until animation starts
-            inputfile.seek(NPC_Address,0)
-            outputfile.write(inputfile.read(NPC_AnimOffset))
-            
-            #get anim count
-            inputfile.seek(NPC_Address+NPC_AnimOffset,0)            
-        else:
-            inputfile.seek(ModelAddress[charID]+4,0)               
-        
-        ModelAnimCount[charID]=int.from_bytes(inputfile.read(2),byteorder='little')
-        outputfile.write(ModelAnimCount[charID].to_bytes(2,'little'))
-            
-        print("Anim count of {} : {}\n".format(ModelName[charID],ModelAnimCount[charID]))
-    
-        for animID in range(ModelAnimCount[charID]):
-                      
-            frameCount=int.from_bytes(inputfile.read(2),byteorder='little')        
-            boneCount=int.from_bytes(inputfile.read(2),byteorder='little')
-            
-            AnimOffset=[ [0,0,0] for frameID in range(frameCount)]
-            BoneRot=[ [ [0,0,0] for boneID in range(boneCount)] for frameID in range(frameCount)]
-            
-            outputfile.write( (    (frameCount-1)*F_INTER  + frameCount   ).to_bytes(2,'little'))# we multiply the frame rate 
-            outputfile.write( boneCount.to_bytes(2,'little'))
-            
-            before_frames=outputfile.tell()
-            
-            #---copy every original frame, spaced by F_INTER-1 frames
-            for frameID in range(0,frameCount):# every original frame
-                #copy offsets
-                AnimOffset[frameID][0]=int.from_bytes(inputfile.read(2),byteorder='little')
-                AnimOffset[frameID][1]=int.from_bytes(inputfile.read(2),byteorder='little')
-                AnimOffset[frameID][2]=int.from_bytes(inputfile.read(2),byteorder='little')
-                
-                outputfile.write(AnimOffset[frameID][0].to_bytes(2,'little'))
-                outputfile.write(AnimOffset[frameID][1].to_bytes(2,'little'))
-                outputfile.write(AnimOffset[frameID][2].to_bytes(2,'little'))
-                
-                '''if(AnimOffset[frameID][0]>0xf000):
-                    AnimOffset[frameID][0]-=0x10000
-                if(AnimOffset[frameID][1]>0xf000):
-                    AnimOffset[frameID][1]-=0x10000
-                if(AnimOffset[frameID][2]>0xf000):
-                    AnimOffset[frameID][2]-=0x10000 '''#My previous code was wrong. On 2 bytes , the range is [-32768,32768] which is [0x10000-0x0800 , 0x800]      
-                
-                if(AnimOffset[frameID][0]>0x8000):
-                    AnimOffset[frameID][0]-=0x10000
-                if(AnimOffset[frameID][1]>0x8000):
-                    AnimOffset[frameID][1]-=0x10000
-                if(AnimOffset[frameID][2]>0x8000):
-                    AnimOffset[frameID][2]-=0x10000
-                
-                #copy bone poses
-                for boneID in range(boneCount):
-                    byte_1=int.from_bytes(inputfile.read(1),byteorder='little')
-                    byte_2=int.from_bytes(inputfile.read(1),byteorder='little')
-                    byte_3=int.from_bytes(inputfile.read(1),byteorder='little')
-                    byte_4=int.from_bytes(inputfile.read(1),byteorder='little')
-                    
-                    outputfile.write(byte_1.to_bytes(1,'little'))
-                    outputfile.write(byte_2.to_bytes(1,'little'))
-                    outputfile.write(byte_3.to_bytes(1,'little'))
-                    outputfile.write(byte_4.to_bytes(1,'little'))
-                      
-                    #Bone rotation is [Rx,Ry,Rz]
-                    BoneRot[frameID][boneID][2]=((byte_1)|((byte_4&3)<<8))<<2#12 bits
-                    BoneRot[frameID][boneID][0]=((byte_2)|((byte_4&0xc)<<6))<<2
-                    BoneRot[frameID][boneID][1]=((byte_3)|((byte_4&0x30)<<4))<<2
-                    
-                    
-                    '''if (BoneRot[frameID][boneID][0]>=0xf00):
-                        BoneRot[frameID][boneID][0]-=0x1000
-                    if (BoneRot[frameID][boneID][1]>=0xf00):
-                        BoneRot[frameID][boneID][1]-=0x1000
-                    if (BoneRot[frameID][boneID][2]>=0xf00):
-                        BoneRot[frameID][boneID][2]-=0x1000'''#wrong
-                        
-                    if (BoneRot[frameID][boneID][0]>=0x800):
-                        BoneRot[frameID][boneID][0]-=0x1000
-                    if (BoneRot[frameID][boneID][1]>=0x800):
-                        BoneRot[frameID][boneID][1]-=0x1000
-                    if (BoneRot[frameID][boneID][2]>=0x800):
-                        BoneRot[frameID][boneID][2]-=0x1000
-                           
-                #---Create placeholders for interpolated frame
-                if frameID<(frameCount-1):
-                    for interID in range(F_INTER):
-                        #--offset
-                        outputfile.write(b'\x00'*6)
-                        #--bone poses
-                        outputfile.write(b'\x00'*4*boneCount)
-            
-               
-            
-            #---INTERPOLATION OF FRAMES------
-            
-            outputfile.seek(before_frames,0)   
-            
-            for frameID in range(0,frameCount-1):
-                outputfile.read( (6 + 4 *boneCount) )#skip original frame
-                 
-                stepX=(AnimOffset[frameID+1][0] - AnimOffset[frameID][0]) / (F_INTER+1) 
-                stepY=(AnimOffset[frameID+1][1] - AnimOffset[frameID][1]) / (F_INTER+1) 
-                stepZ=(AnimOffset[frameID+1][2] - AnimOffset[frameID][2]) / (F_INTER+1) 
-                stepBoneRot =[[0,0,0] for boneID in range(boneCount)]
-                
-                
-                for boneID in range(boneCount):
-                    stepBoneRot[boneID][0]=(BoneRot[frameID+1][boneID][0]-BoneRot[frameID][boneID][0]) / (F_INTER+1) 
-                    stepBoneRot[boneID][1]=(BoneRot[frameID+1][boneID][1]-BoneRot[frameID][boneID][1]) / (F_INTER+1) 
-                    stepBoneRot[boneID][2]=(BoneRot[frameID+1][boneID][2]-BoneRot[frameID][boneID][2]) / (F_INTER+1) 
-                    
-                
-                for interID in range(F_INTER):
-                    interX=AnimOffset[frameID][0] + stepX*(interID+1)
-                    interY=AnimOffset[frameID][1] + stepY*(interID+1)
-                    interZ=AnimOffset[frameID][2] + stepZ*(interID+1)
-                    
-                    interX=int(interX)
-                    interY=int(interY)
-                    interZ=int(interZ)
-                    
-                    if interX<0:
-                        interX+=0x10000
-                    if interY<0:
-                        interY+=0x10000
-                    if interZ<0:
-                        interZ+=0x10000
-                    
-                    outputfile.write(interX.to_bytes(2,'little'))
-                    outputfile.write(interY.to_bytes(2,'little'))
-                    outputfile.write(interZ.to_bytes(2,'little'))
-                    
-                    for boneID in range(boneCount):
-                        rotX=BoneRot[frameID][boneID][0]+stepBoneRot[boneID][0]*(interID+1)
-                        rotY=BoneRot[frameID][boneID][1]+stepBoneRot[boneID][1]*(interID+1)
-                        rotZ=BoneRot[frameID][boneID][2]+stepBoneRot[boneID][2]*(interID+1)
-                                    
-                        #On 12 bits ( 10 bits + 2 shifts), the smallest number is -2048( 0x1000-0x800)
-                        
-                        rotX=int(rotX)&0xFFF#12bits
-                        rotY=int(rotY)&0xFFF#12bits
-                        rotZ=int(rotZ)&0xFFF#12bits
-                                                 
-                        if rotX<0:
-                            rotX+=0x1000
-                        if rotY<0:
-                            rotY+=0x1000
-                        if rotZ<0:
-                            rotZ+=0x1000
-                            
-                        rotX=rotX>>2#10bits
-                        rotY=rotY>>2#10bits
-                        rotZ=rotZ>>2#10bits
-                        
-                            
-                        #chatGPT
-                        #byte_4= (int(rotZ/4)&0x3)|(  (int(rotX/4)&0xc) ) |( (int(rotY/4)&0x30))
-                        #byte_1= int(rotZ/4)& ~(0x3<<8)
-                        #byte_2= int(rotX/4)& ~(0xC<<6)
-                        #byte_3= int(rotY/4)& ~(0x30<<4)
-                        
-                        '''new interpretation, with b1b1b1b1b1b1b1b1-b2b2b2b2b2b2b2b2-b3b3b3b3b3b3b3b3-b4b4b4b4b4b4b4b4 = \
-                                                    RzRzRzRzRzRzRzRz-RxRxRxRxRxRxRxRx-RyRyRyRyRyRyRyRy-RzRzRxRxRyRy 0 0'''
-                        '''byte_4= ((rotZ&0x300)>>8) |((rotX&0x300)>>6) |   ((rotY&0x300)>>4)
-                        byte_1= rotZ&0x7F
-                        byte_2= rotX&0x7F
-                        byte_3= rotY&0x7F'''
-                        
-                        byte_4= ((rotZ>>8)&3) |(  ((rotX>>8)&3)<<2   ) |(   ((rotY>>8)&3)<<4 )
-                        byte_1= rotZ&0xFF
-                        byte_2= rotX&0xFF
-                        byte_3= rotY&0xFF
-                        
-                        
-                        
-                        outputfile.write(byte_1.to_bytes(1,'little'))
-                        outputfile.write(byte_2.to_bytes(1,'little'))
-                        outputfile.write(byte_3.to_bytes(1,'little'))
-                        outputfile.write(byte_4.to_bytes(1,'little'))
-            
-            outputfile.read( (6 + 4 *boneCount) )#read last frame
-        
-                
-        # Add around 2000 zeroes between characters, and rewrite model addresse and size              
-        outputfile.read()#end of file
-        outputfile.write(b'\x00'*2000)
-        New_size=outputfile.tell()-(New_address+4)
-      
-       
-        
-        
-        outputfile.seek(Address_in_file[charID]+4,0)
-        outputfile.write(New_size.to_bytes(4,'little'))
-        outputfile.write(New_size.to_bytes(4,'little'))#written twice
-        
-        outputfile.read()#end of file
-        #change address for next model
-        if charID<charCount-1:
-            New_address=outputfile.tell()-4
-            
-            outputfile.seek(Address_in_file[charID+1],0)
-            
-            outputfile.write(New_address.to_bytes(4,'little'))
-            outputfile.read()# back to end of file
-        
-    print("{} interpolated from 30fps to 60 fps !\n".format(filename))                      
-    inputfile.close()
-    outputfile.close()
-          
-          
-                
-    return
+
 
 from bpy.props import StringProperty
 from bpy_extras.io_utils import ImportHelper, ExportHelper
@@ -2443,32 +2178,6 @@ from bpy_extras.io_utils import ImportHelper, ExportHelper
 """**********************************************
 FF8 operators definitions for the user interface
 ************************************************"""
-class fieldTo60fps_op(bpy.types.Operator):
-    """convert chara.one animation to 60fps"""
-    bl_idname = "ff8tools.field260fps"#No capitals in bl_idname!!"
-    bl_label = "EXPORT folder must contain original CHARA.ONE"
-    bl_option ={'REGISTER'}
-    
-    directory: StringProperty(
-        name="Outdir Path",
-        description="Where I will save my stuff")
-        
-    filter_folder: BoolProperty(
-        default=True,
-        options={"HIDDEN"}
-        )
-
-    def invoke(self, context, event):
-        # Open browser, take reference to 'self' read the path to selected
-        # file, put path in predetermined self fields.
-        context.window_manager.fileselect_add(self)
-        # Tells Blender to hang on for the slow user input
-        return {'RUNNING_MODAL'}
-
-    def execute(self, context):
-        FIELD_TO_60FPS(context, self.directory)
-        return {'FINISHED'}
-
 class MchToBlend_op(bpy.types.Operator):
     '''Import from FF8 (.mch)'''
     bl_idname = "ff8tools.mch2blend"#No capitals in bl_idname!!"
@@ -2529,30 +2238,25 @@ def menu_func_import(self, context):
 
 def menu_func_export(self, context):
     self.layout.operator(BlendToMch_op.bl_idname, text="FF8 Field Model (.mch)")
-def menu_func_field260(self, context):
-    self.layout.operator(fieldTo60fps_op.bl_idname, text="FF8 60 fps field animation (.one)")
+
 
 def register():#register all custom operators
     #check if already in menu
   
     bpy.utils.register_class(MchToBlend_op)
     bpy.utils.register_class(BlendToMch_op)
-    bpy.utils.register_class(fieldTo60fps_op)
+
     bpy.types.TOPBAR_MT_file_import.append(menu_func_import)
     bpy.types.TOPBAR_MT_file_export.append(menu_func_export)
-    bpy.types.TOPBAR_MT_file_export.append(menu_func_field260)
-
 
 def unregister():#unregister all custom operators
     bpy.utils.unregister_class(MchToBlend_op)
     bpy.utils.unregister_class(BlendToMch_op)
-    bpy.utils.unregister_class(fieldTo60fps_op)
+
     bpy.types.TOPBAR_MT_file_import.remove(menu_func_import)
     bpy.types.TOPBAR_MT_file_export.remove(menu_func_export)
-    bpy.types.TOPBAR_MT_file_export.remove(menu_func_field260)
-
 
 if __name__=="__main__":
     register()
         
-    print("Import successful!")
+    print("Code successful!")
