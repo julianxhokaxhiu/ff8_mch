@@ -29,7 +29,7 @@ bl_info = {
     "name": "FF8 60 FPS conversion",
     "author": "Shunsq",
     "blender": (4, 2, 0),
-    "version": (0, 1, 2),
+    "version": (0, 1, 1),
     "location": "File > Export > 60fps chara.one(.one)",
     "description": "Convert chara.one animations to 60fps",
     "category": "Import-Export"
@@ -66,11 +66,6 @@ def FIELD_TO_60FPS(directory=""):
     #----------------------------------
     inputfile.seek(0,0)
     charCount=int.from_bytes(inputfile.read(4),byteorder='little')
-
-    if charCount>300:#file is not a standard charaone file. No character inside
-        print("This is not a normal chara.one file. No character inside!\n")
-        return
-
     print("{} characters".format(charCount))
     outputfile.write(charCount.to_bytes(4,'little'))
     
@@ -406,15 +401,3 @@ if __name__=="__main__":
     folder_selected = filedialog.askdirectory()
 
     FIELD_TO_60FPS(folder_selected)
-
-
-
-            
-
-
-
-
-
-
-
-
