@@ -1,3 +1,24 @@
+#*****************************************************************************#
+#    Copyright (C) 2024 Shunsq                                                #
+#                                                                             #
+#    This file is part of FF8 MCH                                             #
+#                                                                             #
+#    FF8 MCH is free software: you can redistribute it and/or modify          #
+#    it under the terms of the GNU General Public License as published by     #
+#    the Free Software Foundation, either version 3 of the License            #
+#                                                                             #
+#    FF8 MCH is distributed in the hope that it will be useful,               #
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of           #
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the            #
+#    GNU General Public License for more details.                             #
+#*****************************************************************************#
+
+###
+# PLEASE NOTE:
+# THIS IS A STANDALONE SCRIPT. YOU CAN LAUNCH IT USING ONLY PYTHON
+# YOU DO NOT NEED BLENDER FOR IT!
+###
+
 """***********************************************
 *********FIELD260FPS blender script***************
 **********************************************"""
