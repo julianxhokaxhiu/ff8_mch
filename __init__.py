@@ -27,7 +27,7 @@ bl_info = {
     "name": "FF8 MCH Field Models",
     "author": "Shunsq,Julian Xhokaxhiu",
     "blender": (4, 2, 0),
-    "version": (0, 2, 0),
+    "version": (0, 3, 0),
     "location": "File > Import > FF8 Field Model (.mch)",
     "description": "Import field models from FF8",
     "category": "Import-Export"
@@ -652,7 +652,16 @@ def RestPose(mchfile,boneList,char_name):
         pose.rotX=int.from_bytes(mchfile.read(2), byteorder='little')
         pose.rotY=int.from_bytes(mchfile.read(2), byteorder='little')
         pose.rotZ=int.from_bytes(mchfile.read(2), byteorder='little')
-
+        #negative?
+        '''if(pose.rotX>=0xf000):
+            pose.rotX-=0x10000
+        if(pose.rotY>=0xf000):
+            pose.rotY-=0x10000            
+        if(pose.rotZ>=0xf000):
+            pose.rotZ-=0x10000'''#This is wrong.On 2 bytes range is [-(0x10000-0x8000) , 0x8000]
+            
+            
+            
         poseList.append(pose)
          
     #bone name
@@ -677,18 +686,18 @@ def RestPose(mchfile,boneList,char_name):
     ["root","upperbody","lowerbody","neck","collar0","collar1","collar2","collar3","collar4",\
     "collar5","breast_L","breast_R","cape0","cape1","cape2","cape3","cape4","cape5",\
     "head","hair0","hair1","hair2","hair3","hair4","hair5","shoulder_L","shoulder_R",\
-    "arm_L","arm_R","forearm_L","forearm_R","hand_L","hand_R","weap0","weap1","weap2",\
-    "weap3","weap4","weap5","weap6","hip_L","hip_R","belt0","belt1","belt2",\
+    "arm_L","arm_R","forearm_L","forearm_R","hand_L","hand_R","dress0","dress1","dress2",\
+    "dress3","dress4","dress5","dress6","hip_L","hip_R","belt0","belt1","belt2",\
     "belt3","belt4","belt5","thigh_L","thigh_R","tibia_L","tibia_R","foot_L","foot_R"]
     print("{} Bone names".format(len(BoneNames)))
     
     if char_name in ["d022","d023","d024","d025","d026","d051","d075"]:#RINOA
         BoneSequence=\
         [0,1,2,4,"N","N","N","N","N",\
-        "N",3,5,"N","N","N","N","N","N",\
+        "N",3,5,"N","N","N",6,12,18,\
         10,16,22,27,29,30,31,9,11,\
         15,17,21,23,26,28,"N","N","N",\
-        "N","N","N","N",7,8,6,12,18,\
+        "N","N","N","N",7,8,"N","N","N",\
         "N","N","N",13,14,19,20,24,25]
     
     elif char_name in ["d000","d001","d002","d003","d004","d005","d006","d007","d049","d052","d053"]:#SQUALL
@@ -718,17 +727,17 @@ def RestPose(mchfile,boneList,char_name):
         "N","N","N",11,12,15,16,19,20]
     elif char_name in ["d015","d016","d017"]:#IRVINE
         BoneSequence=\
-        [0,1,2,4,5,11,"N","N","N",\
-        "N",3,6,12,19,26,13,20,27,\
+        [0,1,2,4,"N","N","N","N","N",\
+        "N",3,6,5,11,"N","N","N","N",\
         10,18,25,32,"N","N","N",9,14,\
-        17,21,24,28,31,33,"N","N","N",\
-        "N","N","N","N",7,8,"N","N","N",\
+        17,21,24,28,31,33,19,"N",26,\
+        20,"N",27,"N",7,8,12,13,"N",\
         "N","N","N",15,16,22,23,29,30]
     
     elif char_name in ["d018","d019","d020","d021","d050"]:#QUISTIS
         BoneSequence=\
         [0,1,2,4,"N","N","N","N","N",\
-				"N",3,5,"N","N","N","N","N","N",\
+		"N",3,5,"N","N","N","N","N","N",\
         9,14,20,15,21,"N","N",8,10,\
         13,16,19,22,25,26,"N","N","N",\
         "N","N","N","N",6,7,"N","N","N",\
@@ -736,23 +745,163 @@ def RestPose(mchfile,boneList,char_name):
     
     elif char_name in ["d032","d033","d034","d035","d036","d037","d065"]:#SEIFER
         BoneSequence=\
-				[0,1,2,6,8,20,5,17,24,\
-				26,4,7,3,11,12,14,13,15,\
-				18,"N","N","N","N","N","N",16,19,\
-				27,28,35,36,39,40,41,"N","N",\
-				"N","N","N","N",10,9,23,31,32,\
-				25,33,34,22,21,30,29,38,37]
+        [0,1,2,6,8,20,5,17,"N",\
+        "N",4,7,3,11,"N","N","N","N",\
+        18,"N","N","N","N","N","N",16,19,\
+        27,28,35,36,39,40,23,31,32,\
+        25,33,34,"N",9,10,12,14,13,\
+        24,15,26,21,22,29,30,37,38]
+        
+        
+
+
+
 
     elif char_name in ["d040","d041","d042","d035","d074"]:#EDEA
         BoneSequence=\
-                [0,1,2,4,"N","N","N","N","N",\
-                "N",3,5,9,12,"N","N","N","N",\
-                10,"N","N","N","N","N","N",8,11,\
-                15,16,19,20,23,24,"N","N","N",\
-                "N","N","N","N",6,7,"N","N","N",\
-                "N","N","N",13,14,17,18,21,22]
+        [0,1,2,4,"N","N","N","N","N",\
+        "N",3,5,9,12,"N","N","N","N",\
+        10,"N","N","N","N","N","N",8,11,\
+        15,16,19,20,23,24,"N","N","N",\
+        "N","N","N","N",6,7,"N","N","N",\
+        "N","N","N",13,14,17,18,21,22]
 
-
+     
+    elif char_name in ["d054","d055","d056","d057","d059"]:#kids Squall/Zell/Irvine/Selphie/Seifer #same as Zell
+        BoneSequence=\
+        [0,1,2,4,"N","N","N","N","N",\
+        "N",3,5,"N","N","N","N","N","N",\
+        9,"N","N","N","N","N","N",8,10,\
+        13,14,17,18,21,22,"N","N","N",\
+        "N","N","N","N",6,7,"N","N","N",\
+        "N","N","N",11,12,15,16,19,20]
+        
+    elif char_name in ["d058"]:#kid Quistis #same as Selphie
+        BoneSequence=\
+        [0,1,2,4,"N","N","N","N","N",\
+        "N",3,5,"N","N","N","N","N","N",\
+        9,14,"N","N","N","N",19,8,10,\
+        13,15,18,20,23,24,"N","N","N",\
+        "N","N","N","N",6,7,"N","N","N",\
+        "N","N","N",11,12,16,17,21,22]
+        
+    elif char_name in ["d043","d044","d071"]:#Laguna
+        BoneSequence=\
+        [0,1,2,4,12,19,9,16,"N",\
+        "N",3,5,"N","N","N","N","N","N",\
+        10,17,"N","N","N","N",23,8,11,\
+        15,18,22,24,27,28,"N","N","N",\
+        "N","N","N","N",6,7,"N","N","N",\
+        "N","N","N",13,14,20,21,25,26]
+        
+    elif char_name in ["d045","d046","d072"]:#Kiros
+        BoneSequence=\
+        [0,1,2,4,"N","N","N","N","N",\
+        "N",3,5,28,32,34,27,31,33,\
+        9,14,19,26,30,21,20,8,10,\
+        13,15,18,22,25,29,"N","N","N",\
+        "N","N","N","N",6,7,"N","N","N",\
+        "N","N","N",11,12,16,17,23,24]
+        
+    elif char_name in ["d047","d048","d073"]:#Ward
+        BoneSequence=\
+        [0,1,2,4,"N","N","N","N","N",\
+        "N",3,5,12,14,"N","N","N","N",\
+        9,"N","N","N","N","N","N",8,10,\
+        15,16,25,26,29,30,"N","N","N",\
+        "N","N","N","N",6,7,18,19,20,\
+        22,23,24,11,13,17,21,27,28]
+        
+    elif char_name in ["d066"]:#Soldier #same as Selphie
+        BoneSequence=\
+        [0,1,2,4,"N","N","N","N","N",\
+        "N",3,5,"N","N","N","N","N","N",\
+        9,14,19,"N","N","N","N",8,10,\
+        13,15,18,20,23,24,"N","N","N",\
+        "N","N","N","N",6,7,"N","N","N",\
+        "N","N","N",11,12,16,17,21,22]
+        
+    elif char_name in ["d067"]:#Soldier #same as Rinoa
+        BoneSequence=\
+        [0,1,2,4,"N","N","N","N","N",\
+        "N",3,5,"N","N","N","N","N","N",\
+        10,16,22,27,29,30,31,9,11,\
+        15,17,21,23,26,28,"N","N","N",\
+        "N","N","N","N",7,8,6,12,18,\
+        "N","N","N",13,14,19,20,24,25]
+        
+    elif char_name in ["d068"]:#Soldier #same as Quistis
+        BoneSequence=\
+        [0,1,2,4,"N","N","N","N","N",\
+        "N",3,5,"N","N","N","N","N","N",\
+        9,14,20,15,21,"N","N",8,10,\
+        13,16,19,22,25,26,"N","N","N",\
+        "N","N","N","N",6,7,"N","N","N",\
+        "N","N","N",11,12,17,18,23,24]
+    
+    elif char_name in ["d069"]:#Soldier #same as Zell  / Squall
+        BoneSequence=\
+        [0,1,2,4,"N","N","N","N","N",\
+        "N",3,5,"N","N","N","N","N","N",\
+        9,"N","N","N","N","N","N",8,10,\
+        13,14,17,18,21,22,"N","N","N",\
+        "N","N","N","N",6,7,"N","N","N",\
+        "N","N","N",11,12,15,16,19,20]
+        
+    elif char_name in ["d070"]:#Soldier #same as Irvine 
+        BoneSequence=\
+        [0,1,2,4,5,11,"N","N","N",\
+        "N",3,6,12,19,26,13,20,27,\
+        10,18,25,32,"N","N","N",9,14,\
+        17,21,24,28,31,33,"N","N","N",\
+        "N","N","N","N",7,8,"N","N","N",\
+        "N","N","N",15,16,22,23,29,30]
+        
+    elif char_name in ["d060"]:#Spacesuit #same as Squall 
+        BoneSequence=\
+        [0,1,2,4,"N","N","N","N","N",\
+        "N",3,5,"N","N","N","N","N","N",\
+        9,"N","N","N","N","N","N",8,10,\
+        13,14,17,18,21,22,23,24,"N",\
+        "N","N","N","N",6,7,"N","N","N",\
+        "N","N","N",11,12,15,16,19,20]
+        
+    elif char_name in ["d061"]:#Spacesuit #same as Rinoa 
+        BoneSequence=\
+        [0,1,2,4,"N","N","N","N","N",\
+        "N",3,5,"N","N","N","N","N","N",\
+        10,16,22,27,29,30,31,9,11,\
+        15,17,21,23,26,28,"N","N","N",\
+        "N","N","N","N",7,8,6,12,18,\
+        "N","N","N",13,14,19,20,24,25]
+        
+    elif char_name in ["d062"]:#Spacesuit #same as Laguna 
+        BoneSequence=\
+        [0,1,2,4,12,19,9,16,"N",\
+        "N",3,5,"N","N","N","N","N","N",\
+        10,17,23,"N","N","N","N",8,11,\
+        15,18,22,24,27,28,"N","N","N",\
+        "N","N","N","N",6,7,"N","N","N",\
+        "N","N","N",13,14,20,21,25,26]
+        
+    elif char_name in ["d063"]:#Spacesuit #same as Kiros 
+        BoneSequence=\
+        [0,1,2,4,"N","N","N","N","N",\
+        "N",3,5,28,32,34,27,31,33,\
+        9,14,19,26,30,21,20,8,10,\
+        13,15,18,22,25,29,"N","N","N",\
+        "N","N","N","N",6,7,"N","N","N",\
+        "N","N","N",11,12,16,17,23,24]
+        
+    elif char_name in ["d064"]:#Spacesuit #same as Ward 
+        BoneSequence=\
+        [0,1,2,4,"N","N","N","N","N",\
+        "N",3,5,12,14,"N","N","N","N",\
+        9,"N","N","N","N","N","N",8,10,\
+        15,16,25,26,29,30,"N","N","N",\
+        "N","N","N","N",6,7,18,19,20,\
+        22,23,24,11,13,17,21,27,28]
+ 
     
     else:
         print("Unknown character.Default bone sequence")
@@ -827,18 +976,40 @@ def RestPose(mchfile,boneList,char_name):
                
                
             if(boneList[i].name=="collar0"):
-               eul.rotate_axis('Y',math.radians(150))
+                eul[0]=0
+                eul.rotate_axis('Z',math.radians(-30))
+                eul.rotate_axis('Y',math.radians(-90))
+            if(boneList[i].name=="collar2"):
+                eul[0]=0
+                eul.rotate_axis('Z',math.radians(30))
+                eul.rotate_axis('Y',math.radians(-90))
+               
             if(boneList[i].name=="collar1"):
-               eul.rotate_axis('Y',math.radians(-30))
+                eul[0]=0
+                eul.rotate_axis('X',math.radians(90))
+                eul.rotate_axis('Y',math.radians(30))
+        
+            if(boneList[i].name=="collar3"):
+                eul[0]=0
+                eul.rotate_axis('X',math.radians(-90))
+                eul.rotate_axis('Y',math.radians(30))
+               
+               
                
             if(boneList[i].name=="cape0"):
+               
                 eul[0]=0
                 eul[1]=0
                 eul[2]=0
+                eul.rotate_axis('Y',math.radians(-20))
+                
+                
             if(boneList[i].name=="cape1"):
                 eul[0]=0
                 eul[1]=0
                 eul[2]=0
+                eul.rotate_axis('Y',math.radians(-20))
+                
             
             #if(boneList[i].name=="cape2"):
                 #eul[0]=0
@@ -850,6 +1021,61 @@ def RestPose(mchfile,boneList,char_name):
                 eul[2]=0
             #if(boneList[i].name=="cape5"):
                 #eul[0]=0
+                
+            if(boneList[i].name=="belt0"):
+                eul.rotate_axis('Y',math.radians(100))
+                eul.rotate_axis('X',math.radians(-10))
+            if(boneList[i].name=="belt1"):
+                eul.rotate_axis('Y',math.radians(100))
+                eul.rotate_axis('X',math.radians(10))
+            
+            if(boneList[i].name=="belt2"):
+                eul.rotate_axis('Z',math.radians(30))
+                eul.rotate_axis('Y',math.radians(120))
+                  
+            if(boneList[i].name=="belt4"):
+                eul.rotate_axis('Z',math.radians(-30))
+                eul.rotate_axis('Y',math.radians(120))
+             
+            
+            if(boneList[i].name=="belt3"):
+                eul.rotate_axis('Y',math.radians(90))
+                eul.rotate_axis('Z',math.radians(-45))
+            if(boneList[i].name=="belt5"):
+                eul.rotate_axis('Y',math.radians(90))
+                eul.rotate_axis('Z',math.radians(45))
+                
+            
+                
+            if(boneList[i].name=="dress2"):
+                eul[2]=0
+                #eul.rotate_axis('Y',math.radians(-90))
+            if(boneList[i].name=="dress5"):
+                eul[2]=0
+                #eul.rotate_axis('Y',math.radians(-90))
+                
+            if(boneList[i].name=="dress1"):
+                eul.rotate_axis('Y',math.radians(90))
+                eul.rotate_axis('Z',math.radians(90))
+            if(boneList[i].name=="dress4"):
+                eul.rotate_axis('Y',math.radians(90))
+                eul.rotate_axis('Z',math.radians(90))
+                
+            if(boneList[i].name=="dress0"):
+                #eul.rotate_axis('Z',math.radians(40))
+                #eul.rotate_axis('X',math.radians(90))
+                #eul.rotate_axis('Y',math.radians(0))
+                eul[2]=0
+                eul[1]=0
+                eul[0]=0     
+                
+            if(boneList[i].name=="dress3"):
+                #eul.rotate_axis('Z',math.radians(-40))
+                #eul.rotate_axis('X',math.radians(-90))
+                #eul.rotate_axis('Y',math.radians(0))
+                eul[2]=0
+                eul[1]=0
+                eul[0]=0 
                 
                
             
@@ -873,8 +1099,6 @@ def RestPose(mchfile,boneList,char_name):
                eul.rotate_axis('Z',math.radians(-70))
                eul.rotate_axis('X',math.radians(-15))
             
-            if(boneList[i].name=="belt1"):
-                eul[1]=0
             if(boneList[i].name=="hip_R"):
                eul[1]=0
                eul[2]=0
@@ -885,10 +1109,12 @@ def RestPose(mchfile,boneList,char_name):
                 eul.rotate_axis('Y',math.radians(-20))
             if(boneList[i].name=="thigh_R"):
                 eul[0]=0
-                eul[1]=0  
+                eul[1]=0
+                eul[2]=0 
             if(boneList[i].name=="thigh_L"):
                 eul[0]=0
-                eul[1]=0  
+                eul[1]=0
+                eul[2]=0  
                
   
         
@@ -930,7 +1156,8 @@ def poseRig(armature,boneList,poseList,offset,frame_num):
             locZ=offset[2]
             
             
-            pbone.location=Vector((locY,(locZ-boneList[boneID].length/256),locX))
+            #pbone.location=Vector((locY,(locZ-boneList[boneID].length/256),locX))
+            pbone.location=Vector((locX,locZ-boneList[boneID].length/256,locY))
             pbone.keyframe_insert(data_path="location" ,frame=frame_num)
             
             
@@ -954,6 +1181,36 @@ def poseRig(armature,boneList,poseList,offset,frame_num):
         elif(pbone.name=='breast_L'): 
             pbone.rotation_euler.rotate(   Euler  ((0,math.radians(180),0),'YXZ'))
             
+        elif(pbone.name=='belt0'): 
+            pbone.rotation_euler.rotate(   Euler  ((0,math.radians(180),0),'YXZ'))
+        elif(pbone.name=='belt1'): 
+            pbone.rotation_euler.rotate(   Euler  ((0,math.radians(180),0),'YXZ'))
+        elif(pbone.name=='belt2'): 
+            pbone.rotation_euler.rotate(   Euler  ((0,math.radians(180),0),'YXZ'))
+        elif(pbone.name=='belt4'): 
+            pbone.rotation_euler.rotate(   Euler  ((0,math.radians(180),0),'YXZ'))
+        elif(pbone.name=='belt5'): 
+            pbone.rotation_euler.rotate(   Euler  ((math.radians(90),0,0),'YXZ'))
+        
+        elif(pbone.name=='dress1'): 
+            pbone.rotation_euler.rotate(   Euler  ((0,0,math.radians(90)),'YXZ'))
+        elif(pbone.name=='dress4'): 
+            pbone.rotation_euler.rotate(   Euler  ((0,0,math.radians(90)),'YXZ'))
+            
+        elif(pbone.name=='cape3'): 
+            pbone.rotation_euler.rotate(   Euler  ((0,math.radians(180),0),'YXZ'))
+            
+        elif(pbone.name=='hair5'): 
+            pbone.rotation_euler.rotate(   Euler  ((0,math.radians(180),0),'YXZ'))
+        
+        elif(pbone.name=='collar0'): 
+            pbone.rotation_euler.rotate(   Euler  ((0,math.radians(180),0),'YXZ'))
+            
+        elif(pbone.name=='collar2'): 
+            pbone.rotation_euler.rotate(   Euler  ((0,math.radians(180),0),'YXZ'))
+           
+           
+            
         
     
         
@@ -964,8 +1221,6 @@ def poseRig(armature,boneList,poseList,offset,frame_num):
         
     bpy.ops.object.mode_set(mode='OBJECT')
     bpy.context.scene.frame_set(0)
-    
-    return
     
     
 
@@ -1052,7 +1307,9 @@ def Retarget(arm_to_copy,arm_retarget,anim):
         bpy.context.scene.frame_set(0) 
     
     bpy.ops.object.mode_set(mode='OBJECT')
-  
+              
+        
+
     return
 def ReadAnim(boneList,onefile,char_name):
     """Returns a list of animations. An animation is a list of frames. A frame is a pose list of a bone list."""
@@ -1542,22 +1799,29 @@ def MCH_TO_BLEND(context,directory=""):
         bone=boneList[i]
         rawbonelist.append(bone)
     
+    #------adjust upperbody and lower body rotation relative to root
     for i in range(0,header.BoneCount):   
         Vec=Vector((0,0,1))
-        eul=Euler((0,0,0),'YXZ')
+      
         
         if char_name in(["d000","d001","d002","d003","d004","d005","d006","d007",\
-                        "d018","d019","d020","d021","d022","d023","d024","d025",\
-                        "d026","d049","d050","d051","d052","d053","d075",\
+                        "d009","d010","d011","d012","d014","d060","d069",\
+                        "d018","d019","d020","d021","d068","d022","d023","d024","d025",\
+                        "d026","d061","d067","d047","d048","d064","d073","d049","d050","d051","d052","d053","d075",\
                         "d032","d033","d034","d035","d036","d037","d065",\
+                        "d054","d055","d056","d057","d058","d059",\
                         "d040","d041","d042","d074"]):
             if(i==0):
-                Vec=Vector((-1,0,0))
+                Vec=Vector((-1,0,0))  
             else:
-                Vec=Vector((0,-1,0))
-            Vec.rotate(eul)
-
-
+                Vec=Vector((0,0,1))
+        
+        elif char_name in(["d015","d016","d017","d027","d028","d029","d030"]):
+            if(i==0):
+                Vec=Vector((0,0,1))
+            else:
+                Vec=Vector((0,0,1))    
+ 
         rawbonelist[i].tail=Vec*rawbonelist[i].length/256+rawbonelist[rawbonelist[i].parent].tail
         rawbonelist[i].head=rawbonelist[rawbonelist[i].parent].tail
     
@@ -1565,7 +1829,18 @@ def MCH_TO_BLEND(context,directory=""):
      
     armature_raw=bpy.context.scene.objects[char_name+"_armature_raw"]
     bpy.context.view_layer.objects.active=armature_raw
-    armature_raw.rotation_euler.rotate_axis('Y',math.radians(90))
+    
+    #--------adjust root rotation
+    if char_name in(["d000","d001","d002","d003","d004","d005","d006","d007",\
+                        "d009","d010","d011","d012","d014","d060","d069",\
+                        "d018","d019","d020","d021","d068","d022","d023","d024","d025",\
+                        "d026","d061","d067","d047","d048","d064","d073","d049","d050","d051","d052","d053","d075",\
+                        "d032","d033","d034","d035","d036","d037","d065",\
+                        "d054","d055","d056","d057","d058","d059",\
+                        "d040","d041","d042","d074"]):
+        armature_raw.rotation_euler.rotate_axis('Y',math.radians(90))
+        armature_raw.rotation_euler.rotate_axis('X',math.radians(90))
+   
     
     #END----Create armature---19/09/2024---Shunsq
     #--------------------------------------------
