@@ -27,7 +27,7 @@ bl_info = {
     "name": "FF8 MCH Field Models",
     "author": "Shunsq,Julian Xhokaxhiu",
     "blender": (4, 2, 0),
-    "version": (0, 3, 0),
+    "version": (0, 3, 1),
     "location": "File > Import > FF8 Field Model (.mch)",
     "description": "Import field models from FF8",
     "category": "Import-Export"
@@ -1935,7 +1935,7 @@ def MCH_TO_BLEND(context,directory=""):
     return
 
 def BLEND_TO_MCH(context,directory=""):
-    #----OLD CODE ---05/10/2024-----
+	#----OLD CODE ---05/10/2024-----
     #--------------------------------
     #cur_dir=bpy.path.abspath("//")
     #indir_name=''.join([cur_dir,"INPUT\\"])
@@ -1975,11 +1975,7 @@ def BLEND_TO_MCH(context,directory=""):
     inputfile=open(inputpath,"rb")
     
     outputfile=open(outputpath,"wb")
-    
-    
-     
-        
-    
+   
     
     #We need the original file to copy information: name, number of bones, texture animation
     
@@ -2017,57 +2013,24 @@ def BLEND_TO_MCH(context,directory=""):
     Bone_count=len(skl.data.bones)
     
     print("Exporting {}\nVcount:{} Fcount:{} UVcount:{} Vgroups:{} Bones:{}".format(header.char_name,Vcount,Fcount,UVcount,Vgroup_count,Bone_count))
-       
+    
+    #--------------------------------------------
+    #----UPDATE from 17/09/2024 starts here------
+    #-------------------------------------------- 
+    
     #----New model should share same skeleton, same texture count,same texture animation location
     #----New model real texture will be called with tonberry/FFnx plugin by detecting old texture
     
     #---COPY TEXTURES OFFSETS AND MAPS---
     #--------------------------------------
     inputfile.seek(0,0)
-    texoffset=0
-    texcount=0
-    toread=0
-    while toread!=0xFFFFFF:
-        toread=int.from_bytes(inputfile.read(3), byteorder='little')
-        inputfile.seek(1,1)#skip 1 byte
-        if toread!=0xFFFFFF:
-            texcount+=1
-            texoffset=toread
-            print("texcount:{} , texoffset:{}\n".format(texcount,texoffset))
-            outputfile.write(toread.to_bytes(3,'little'))
-            outputfile.write(b'\x00')
- 
-    tsize=header.ModelAddress-texoffset#tesoffset is last texture
-    newaddress=texoffset+tsize
-    for dup in range (4-texcount): #duplicate texture to fully use 4 quadrants
-        outputfile.write(newaddress.to_bytes(3,'little'))
-        outputfile.write(b'\x00')
-        newaddress+=tsize
-        
-    #end code
-    endcode=0xFFFFFFFF
-    outputfile.write(endcode.to_bytes(4,'little'))
-    #new model address
-    outputfile.write(newaddress.to_bytes(4,'little'))
-    
-    #copy original textures
-    inputfile.seek(0,0)
-    ftexoffset=int.from_bytes(inputfile.read(4),byteorder='little')#1st texture offset
-    inputfile.seek(ftexoffset,0)
-   
-    
-    outputfile.seek(ftexoffset,0)#padding until 1st texture
-    outputfile.write(inputfile.read(header.ModelAddress - ftexoffset))
-
-    #duplicate texture to fully use 4 quadrants    
-    for dup in range (4-texcount): 
-        inputfile.seek(texoffset,0)#last texture offset
-        outputfile.write(inputfile.read(tsize))
-    
+    outputfile.write(inputfile.read(header.ModelAddress))
+     
+           
     #----NEW HEADER-------
     newheader=MchHeader_class()
     newheader.char_name=header.char_name
-    newheader.ModelAddress=newaddress
+    newheader.ModelAddress=header.ModelAddress#newaddress
     newheader.BoneCount=header.BoneCount
     newheader.VCount=Vcount
     newheader.TexAnimSize=header.TexAnimSize#we keep the same number of frames
@@ -2257,6 +2220,11 @@ def BLEND_TO_MCH(context,directory=""):
     print("REAL FACE OFFSET:{}\n".format(hex(outputfile.tell()-header.ModelAddress),'08x'))
     
     outputfile.seek(newheader.ModelAddress +newheader.FOffset,0)
+	try:
+		bpy.ops.object.mode_set(mode='EDIT')
+	except:
+		pass
+	
     uv_layer = me.uv_layers["{}UV".format(newheader.char_name)]
     Vinvert=[0 for i in range(newheader.VCount)]# if vertID is global ID, order ID is the Vgroup ID of vertID, offset is the position of the Vgroup, then Vinvert[vertID]=orderID +offset is the re-ordered ID
     offset=[0 for i in range(newheader.ObCount)]
@@ -2373,8 +2341,10 @@ def BLEND_TO_MCH(context,directory=""):
         outputfile.write((2*texgroup[0]+texgroup[1]).to_bytes(2,'little'))
         outputfile.write(b'\x00' * 8)#skip 8 bytes
         countface+=1
-        
-    bpy.ops.object.mode_set(mode='OBJECT')
+    try:
+		bpy.ops.object.mode_set(mode='OBJECT')
+	except:
+		pass    
     #---WRITE UNK1 DATA---
     #---------------------
     outputfile.seek(0,2)
