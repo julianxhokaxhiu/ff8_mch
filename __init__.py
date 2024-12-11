@@ -2147,6 +2147,14 @@ def BLEND_TO_MCH(context,directory=""):
 
     Vorder_total=0
     rot_eul=Euler((0,0,0),'XYZ')
+    #make sure we are in object mode
+    try:
+        bpy.ops.object.mode_set(mode='OBJECT')
+        bpy.context.view_layer.objects.active=char_ob
+        char_ob.select_set(state = True)
+           
+    except:
+        pass 
     me=char_ob.data
     vfound=[ 0 for i in range(len(char_ob.data.vertices))]#prevent doubles in vertex groups
 
@@ -2220,10 +2228,7 @@ def BLEND_TO_MCH(context,directory=""):
     print("REAL FACE OFFSET:{}\n".format(hex(outputfile.tell()-header.ModelAddress),'08x'))
 
     outputfile.seek(newheader.ModelAddress +newheader.FOffset,0)
-    try:
-        bpy.ops.object.mode_set(mode='EDIT')
-    except:
-        pass
+   
 
     uv_layer = me.uv_layers["{}UV".format(newheader.char_name)]
     Vinvert=[0 for i in range(newheader.VCount)]# if vertID is global ID, order ID is the Vgroup ID of vertID, offset is the position of the Vgroup, then Vinvert[vertID]=orderID +offset is the re-ordered ID
@@ -2341,10 +2346,7 @@ def BLEND_TO_MCH(context,directory=""):
         outputfile.write((2*texgroup[0]+texgroup[1]).to_bytes(2,'little'))
         outputfile.write(b'\x00' * 8)#skip 8 bytes
         countface+=1
-    try:
-        bpy.ops.object.mode_set(mode='OBJECT')
-    except:
-        pass
+    
     #---WRITE UNK1 DATA---
     #---------------------
     outputfile.seek(0,2)
@@ -2378,7 +2380,7 @@ def BLEND_TO_MCH(context,directory=""):
     print("REAL SKIN OB OFFSET:{} ".format(hex(outputfile.tell()-header.ModelAddress),'08x'))
 
     outputfile.seek(newheader.ModelAddress +newheader.ObOffset,0)
-    #---23/09/2024-code changed here
+  
     for vgroup in char_ob.vertex_groups:
         outputfile.write((Vinvert[Vorder[vgroup.index][0]]).to_bytes(2,'little'))#1stvertex
         outputfile.write(len(Vorder[vgroup.index]).to_bytes(2,'little'))#vertex count
