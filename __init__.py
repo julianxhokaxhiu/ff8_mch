@@ -691,60 +691,94 @@ def RestPose(mchfile,boneList,char_name):
     "belt3","belt4","belt5","thigh_L","thigh_R","tibia_L","tibia_R","foot_L","foot_R"]
     print("{} Bone names".format(len(BoneNames)))
 
-    if char_name in ["d022","d023","d024","d025","d026","d051","d075"]:#RINOA
-        BoneSequence=\
-        [0,1,2,4,"N","N","N","N","N",\
-        "N",3,5,"N","N","N",6,12,18,\
+    firstRow = [0,1,2,4,"N","N","N","N","N"]
+    secondRow = ["N",3,5,"N","N","N","N","N","N"]
+    thirdRow = [9,"N","N","N","N","N","N",8,10]
+    fifthRow = ["N","N","N","N",6,7,"N","N","N"]
+    sixthRow = ["N","N","N",11,12,15,16,19,20]
+
+    if char_name in ["d022","d023","d024","d025","d026","d051","d075","d067","d061"]:#RINOA + Soldier/Spacesuit Rinoa
+        BoneSequence = firstRow + \
+        ["N",3,5,"N","N","N",6,12,18,\
         10,16,22,27,29,30,31,9,11,\
         15,17,21,23,26,28,"N","N","N",\
         "N","N","N","N",7,8,"N","N","N",\
         "N","N","N",13,14,19,20,24,25]
 
-    elif char_name in ["d000","d001","d002","d003","d004","d005","d006","d007","d049","d052","d053"]:#SQUALL
-        BoneSequence=\
-        [0,1,2,4,"N","N","N","N","N",\
-        "N",3,5,"N","N","N","N","N","N",\
-        9,"N","N","N","N","N","N",8,10,\
-        13,14,17,18,21,22,23,24,"N",\
-        "N","N","N","N",6,7,"N","N","N",\
-        "N","N","N",11,12,15,16,19,20]
+    elif char_name in ["d000","d001","d002","d003","d004","d005","d006","d007","d049","d052","d053","d060"]:#SQUALL + Spacesuit Squall
+        BoneSequence = firstRow + \
+        secondRow + \
+        thirdRow + \
+        [13,14,17,18,21,22,23,24,"N"] + \
+        fifthRow + \
+        sixthRow
 
-    elif char_name in ["d027","d028","d029","d030"]:#SELPHIE
-        BoneSequence=\
-        [0,1,2,4,"N","N","N","N","N",\
-        "N",3,5,"N","N","N","N","N","N",\
-        9,14,19,"N","N","N","N",8,10,\
-        13,15,18,20,23,24,"N","N","N",\
-        "N","N","N","N",6,7,"N","N","N",\
-        "N","N","N",11,12,16,17,21,22]
-    elif char_name in ["d009","d010","d011","d012","d014"]:#ZELL
-        BoneSequence=\
-        [0,1,2,4,"N","N","N","N","N",\
-        "N",3,5,"N","N","N","N","N","N",\
-        9,"N","N","N","N","N","N",8,10,\
-        13,14,17,18,21,22,"N","N","N",\
-        "N","N","N","N",6,7,"N","N","N",\
-        "N","N","N",11,12,15,16,19,20]
-    elif char_name in ["d015","d016","d017"]:#IRVINE
-        BoneSequence=\
-        [0,1,2,4,"N","N","N","N","N",\
-        "N",3,6,5,11,"N","N","N","N",\
+    elif char_name in ["d027","d028","d029","d030", "d066"]:#SELPHIE + Soldier Selphie
+        BoneSequence = firstRow + \
+        secondRow + \
+        [9,14,19,"N","N","N","N",8,10,\
+        13,15,18,20,23,24,"N","N","N"] + \
+        fifthRow + \
+        ["N","N","N",11,12,16,17,21,22]
+
+    elif char_name in ["d009","d010","d011","d012","d014", "d054","d055","d056","d057","d059", "d069"]:#ZELL + Kids + Soldier Zell
+        BoneSequence = firstRow + \
+        secondRow + \
+        thirdRow + \
+        [13,14,17,18,21,22,"N","N","N"] + \
+        fifthRow + \
+        sixthRow
+
+    elif char_name in ["d015","d016","d017", "d070"]:#IRVINE + Soldier
+        BoneSequence = firstRow + \
+        ["N",3,6,5,11,"N","N","N","N",\
         10,18,25,32,"N","N","N",9,14,\
         17,21,24,28,31,33,19,"N",26,\
         20,"N",27,"N",7,8,12,13,"N",\
         "N","N","N",15,16,22,23,29,30]
 
-    elif char_name in ["d018","d019","d020","d021","d050"]:#QUISTIS
-        BoneSequence=\
-        [0,1,2,4,"N","N","N","N","N",\
-        "N",3,5,"N","N","N","N","N","N",\
-        9,14,20,15,21,"N","N",8,10,\
-        13,16,19,22,25,26,"N","N","N",\
-        "N","N","N","N",6,7,"N","N","N",\
-        "N","N","N",11,12,17,18,23,24]
+    elif char_name in ["d018","d019","d020","d021","d050", "d068"]:#QUISTIS + Soldier Quistis
+        BoneSequence = firstRow + \
+        secondRow + \
+        [9,14,20,15,21,"N","N",8,10,\
+        13,16,19,22,25,26,"N","N","N"] + \
+        fifthRow + \
+        ["N","N","N",11,12,17,18,23,24]
 
+    elif char_name in ["d040","d041","d042","d035","d074"]:#EDEA
+        BoneSequence = firstRow + \
+        ["N",3,5,9,12,"N","N","N","N",\
+        10,"N","N","N","N","N","N",8,11,\
+        15,16,19,20,23,24,"N","N","N"] + \
+        fifthRow + \
+        ["N","N","N",13,14,17,18,21,22]
+
+    elif char_name in ["d058"]:#kid Quistis
+        BoneSequence = firstRow + \
+        secondRow + \
+        [9,14,"N","N","N","N",19,8,10,\
+        13,15,18,20,23,24,"N","N","N"] + \
+        fifthRow + \
+        ["N","N","N",11,12,16,17,21,22]
+
+    elif char_name in ["d045","d046","d072", "d063"]:#KIROS + Spacesuit Kiros
+        BoneSequence = firstRow + \
+        ["N",3,5,28,32,34,27,31,33,\
+        9,14,19,26,30,21,20,8,10,\
+        13,15,18,22,25,29,"N","N","N"] + \
+        fifthRow + \
+        ["N","N","N",11,12,16,17,23,24]
+
+    elif char_name in ["d047","d048","d073", "d064"]:#WARD + Spacesuit Ward
+        BoneSequence = firstRow + \
+        ["N",3,5,12,14,"N","N","N","N",\
+        9,"N","N","N","N","N","N",8,10,\
+        15,16,25,26,29,30,"N","N","N",\
+        "N","N","N","N",6,7,18,19,20,\
+        22,23,24,11,13,17,21,27,28]
+ 
     elif char_name in ["d032","d033","d034","d035","d036","d037","d065"]:#SEIFER
-        BoneSequence=\
+        BoneSequence = \
         [0,1,2,6,8,20,5,17,"N",\
         "N",4,7,3,11,"N","N","N","N",\
         18,"N","N","N","N","N","N",16,19,\
@@ -752,156 +786,14 @@ def RestPose(mchfile,boneList,char_name):
         25,33,34,"N",9,10,12,14,13,\
         24,15,26,21,22,29,30,37,38]
 
-
-
-
-
-
-    elif char_name in ["d040","d041","d042","d035","d074"]:#EDEA
-        BoneSequence=\
-        [0,1,2,4,"N","N","N","N","N",\
-        "N",3,5,9,12,"N","N","N","N",\
-        10,"N","N","N","N","N","N",8,11,\
-        15,16,19,20,23,24,"N","N","N",\
-        "N","N","N","N",6,7,"N","N","N",\
-        "N","N","N",13,14,17,18,21,22]
-
-
-    elif char_name in ["d054","d055","d056","d057","d059"]:#kids Squall/Zell/Irvine/Selphie/Seifer #same as Zell
-        BoneSequence=\
-        [0,1,2,4,"N","N","N","N","N",\
-        "N",3,5,"N","N","N","N","N","N",\
-        9,"N","N","N","N","N","N",8,10,\
-        13,14,17,18,21,22,"N","N","N",\
-        "N","N","N","N",6,7,"N","N","N",\
-        "N","N","N",11,12,15,16,19,20]
-
-    elif char_name in ["d058"]:#kid Quistis #same as Selphie
-        BoneSequence=\
-        [0,1,2,4,"N","N","N","N","N",\
-        "N",3,5,"N","N","N","N","N","N",\
-        9,14,"N","N","N","N",19,8,10,\
-        13,15,18,20,23,24,"N","N","N",\
-        "N","N","N","N",6,7,"N","N","N",\
-        "N","N","N",11,12,16,17,21,22]
-
-    elif char_name in ["d043","d044","d071"]:#Laguna
-        BoneSequence=\
+    elif char_name in ["d043","d044","d071", "d062"]:#LAGUNA + Spacesuit Laguna
+        BoneSequence = \
         [0,1,2,4,12,19,9,16,"N",\
         "N",3,5,"N","N","N","N","N","N",\
         10,17,"N","N","N","N",23,8,11,\
-        15,18,22,24,27,28,"N","N","N",\
-        "N","N","N","N",6,7,"N","N","N",\
-        "N","N","N",13,14,20,21,25,26]
-
-    elif char_name in ["d045","d046","d072"]:#Kiros
-        BoneSequence=\
-        [0,1,2,4,"N","N","N","N","N",\
-        "N",3,5,28,32,34,27,31,33,\
-        9,14,19,26,30,21,20,8,10,\
-        13,15,18,22,25,29,"N","N","N",\
-        "N","N","N","N",6,7,"N","N","N",\
-        "N","N","N",11,12,16,17,23,24]
-
-    elif char_name in ["d047","d048","d073"]:#Ward
-        BoneSequence=\
-        [0,1,2,4,"N","N","N","N","N",\
-        "N",3,5,12,14,"N","N","N","N",\
-        9,"N","N","N","N","N","N",8,10,\
-        15,16,25,26,29,30,"N","N","N",\
-        "N","N","N","N",6,7,18,19,20,\
-        22,23,24,11,13,17,21,27,28]
-
-    elif char_name in ["d066"]:#Soldier #same as Selphie
-        BoneSequence=\
-        [0,1,2,4,"N","N","N","N","N",\
-        "N",3,5,"N","N","N","N","N","N",\
-        9,14,19,"N","N","N","N",8,10,\
-        13,15,18,20,23,24,"N","N","N",\
-        "N","N","N","N",6,7,"N","N","N",\
-        "N","N","N",11,12,16,17,21,22]
-
-    elif char_name in ["d067"]:#Soldier #same as Rinoa
-        BoneSequence=\
-        [0,1,2,4,"N","N","N","N","N",\
-        "N",3,5,"N","N","N","N","N","N",\
-        10,16,22,27,29,30,31,9,11,\
-        15,17,21,23,26,28,"N","N","N",\
-        "N","N","N","N",7,8,6,12,18,\
-        "N","N","N",13,14,19,20,24,25]
-
-    elif char_name in ["d068"]:#Soldier #same as Quistis
-        BoneSequence=\
-        [0,1,2,4,"N","N","N","N","N",\
-        "N",3,5,"N","N","N","N","N","N",\
-        9,14,20,15,21,"N","N",8,10,\
-        13,16,19,22,25,26,"N","N","N",\
-        "N","N","N","N",6,7,"N","N","N",\
-        "N","N","N",11,12,17,18,23,24]
-
-    elif char_name in ["d069"]:#Soldier #same as Zell  / Squall
-        BoneSequence=\
-        [0,1,2,4,"N","N","N","N","N",\
-        "N",3,5,"N","N","N","N","N","N",\
-        9,"N","N","N","N","N","N",8,10,\
-        13,14,17,18,21,22,"N","N","N",\
-        "N","N","N","N",6,7,"N","N","N",\
-        "N","N","N",11,12,15,16,19,20]
-
-    elif char_name in ["d070"]:#Soldier #same as Irvine
-        BoneSequence=\
-        [0,1,2,4,5,11,"N","N","N",\
-        "N",3,6,12,19,26,13,20,27,\
-        10,18,25,32,"N","N","N",9,14,\
-        17,21,24,28,31,33,"N","N","N",\
-        "N","N","N","N",7,8,"N","N","N",\
-        "N","N","N",15,16,22,23,29,30]
-
-    elif char_name in ["d060"]:#Spacesuit #same as Squall
-        BoneSequence=\
-        [0,1,2,4,"N","N","N","N","N",\
-        "N",3,5,"N","N","N","N","N","N",\
-        9,"N","N","N","N","N","N",8,10,\
-        13,14,17,18,21,22,23,24,"N",\
-        "N","N","N","N",6,7,"N","N","N",\
-        "N","N","N",11,12,15,16,19,20]
-
-    elif char_name in ["d061"]:#Spacesuit #same as Rinoa
-        BoneSequence=\
-        [0,1,2,4,"N","N","N","N","N",\
-        "N",3,5,"N","N","N","N","N","N",\
-        10,16,22,27,29,30,31,9,11,\
-        15,17,21,23,26,28,"N","N","N",\
-        "N","N","N","N",7,8,6,12,18,\
-        "N","N","N",13,14,19,20,24,25]
-
-    elif char_name in ["d062"]:#Spacesuit #same as Laguna
-        BoneSequence=\
-        [0,1,2,4,12,19,9,16,"N",\
-        "N",3,5,"N","N","N","N","N","N",\
-        10,17,23,"N","N","N","N",8,11,\
-        15,18,22,24,27,28,"N","N","N",\
-        "N","N","N","N",6,7,"N","N","N",\
-        "N","N","N",13,14,20,21,25,26]
-
-    elif char_name in ["d063"]:#Spacesuit #same as Kiros
-        BoneSequence=\
-        [0,1,2,4,"N","N","N","N","N",\
-        "N",3,5,28,32,34,27,31,33,\
-        9,14,19,26,30,21,20,8,10,\
-        13,15,18,22,25,29,"N","N","N",\
-        "N","N","N","N",6,7,"N","N","N",\
-        "N","N","N",11,12,16,17,23,24]
-
-    elif char_name in ["d064"]:#Spacesuit #same as Ward
-        BoneSequence=\
-        [0,1,2,4,"N","N","N","N","N",\
-        "N",3,5,12,14,"N","N","N","N",\
-        9,"N","N","N","N","N","N",8,10,\
-        15,16,25,26,29,30,"N","N","N",\
-        "N","N","N","N",6,7,18,19,20,\
-        22,23,24,11,13,17,21,27,28]
-
+        15,18,22,24,27,28,"N","N","N"] + \
+        fifthRow + \
+        ["N","N","N",13,14,20,21,25,26]
 
     else:
         print("Unknown character.Default bone sequence")
