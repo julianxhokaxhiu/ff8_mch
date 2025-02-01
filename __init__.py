@@ -1497,23 +1497,39 @@ def MCH_TO_BLEND(context,directory=""):
 
 
     #Store vertices
+    #get character scale from chara.one
+    SCALE=0x100
+    if one_found==1:
+        onepath=''.join([directory,curr_one_name,".one"])
+        onefile=open(onepath,"rb")
+        onetxt=onefile.read()
+        pos=onetxt.find(bytes(char_name, 'utf-8'))#character header position in chara.one
+        if pos==-1:
+            print("the chara.one doesn't contain {}\n".format(char_name))
+        else:
+            onefile.seek(pos-7,0)#go back 7 bytes to read the character scale
+            SCALE=int.from_bytes(onefile.read(2), byteorder='little')
+            print("character scale is {}\n".format(SCALE))
+        onefile.close()
+        
+        
     inputfile.seek(header.ModelAddress+header.VOffset)
     Vlist=[]
     for i in range(header.VCount):
         x=int.from_bytes(inputfile.read(2), byteorder='little')
-        if(x>0x10000-MAX_SIZE):#negative
+        if(x>0x8000):#negative
             x-=0x10000
         y=int.from_bytes(inputfile.read(2), byteorder='little')
-        if(y>0x10000-MAX_SIZE):#negative
+        if(y>0x8000):#negative
             y-=0x10000
         z=int.from_bytes(inputfile.read(2), byteorder='little')
-        if(z>0x10000-MAX_SIZE):#negative
+        if(z>0x8000):#negative
             z-=0x10000
         #skip 2 unknown bytes from actual position
         inputfile.seek(2,1)
         #store the vertex as a 3 float list
-        Vlist.append(MchVertex_class(x/256,y/256,z/256))
-        ##print("X{} Y{} Z{}".format(Vlist[i].x,Vlist[i].y,Vlist[i].z))
+        Vlist.append(MchVertex_class(x/SCALE,y/SCALE,z/SCALE))
+       
 
 
     #Store faces and UVs
