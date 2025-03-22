@@ -28,7 +28,7 @@ from os.path import basename,dirname
 bl_info = {
     "name": "FF8 60 FPS conversion",
     "author": "Shunsq",
-    "blender": (4, 3, 0),
+    "blender": (4, 4, 0),
     "version": (0, 1, 1),
     "location": "File > Export > 60fps chara.one(.one)",
     "description": "Convert chara.one animations to 60fps",
