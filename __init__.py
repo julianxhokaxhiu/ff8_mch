@@ -26,7 +26,7 @@ from bpy.types import Operator
 bl_info = {
     "name": "FF8 MCH Field Models",
     "author": "Shunsq,Julian Xhokaxhiu",
-    "blender": (4, 4, 0),
+    "blender": (4, 5, 0),
     "version": (0, 3, 1),
     "location": "File > Import > FF8 Field Model (.mch)",
     "description": "Import field models from FF8",

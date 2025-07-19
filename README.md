@@ -4,7 +4,7 @@ FF8 MCH is a Blender plugin that allows to import/export .MCH field model files 
 
 ## Installation
 
-0. Install [Blender 4.4](https://www.blender.org/download/releases/4-4/)
+0. Install [Blender 4.5](https://www.blender.org/download/releases/4-5/)
 1. Download this repository [as a ZIP](https://github.com/julianxhokaxhiu/ff8_mch/archive/refs/heads/master.zip)
 2. Edit -> Preferences -> Add-ons -> Install from Disk...
 3. Pick the ZIP you downloaded
