@@ -26,8 +26,8 @@ from bpy.types import Operator
 bl_info = {
     "name": "FF8 MCH Field Models",
     "author": "Shunsq,Julian Xhokaxhiu",
-    "blender": (4, 5, 0),
-    "version": (0, 3, 1),
+    "blender": (5, 0, 0),
+    "version": (0, 3, 2),
     "location": "File > Import > FF8 Field Model (.mch)",
     "description": "Import field models from FF8",
     "category": "Import-Export"
@@ -546,8 +546,8 @@ def createRig(name, origin, MCHboneList):
             bone.head = (0,0,0)
 
         else:
-            if ((i==1)|(bname=="neck")|(bname=="head")|(bname[0:4]=="hair")|(bname[0:4]=="cape")|(bname[0:6]=="collar")):
-                bone.roll-=math.radians(180)
+            """if ((i==1)|(bname=="neck")|(bname=="head")|(bname[0:4]=="hair")|(bname[0:4]=="cape")|(bname[0:6]=="collar")):
+                bone.roll-=math.radians(180)"""
 
             pname=MCHboneList[MCHboneList[i].parent].name
             parent = amt.edit_bones[pname]
@@ -559,6 +559,66 @@ def createRig(name, origin, MCHboneList):
     bpy.ops.object.mode_set(mode='OBJECT')
     return ob
 
+def RAWarmature (boneList,char_name):
+     #create raw armature( for charaone )
+    boneCount=len(boneList)
+    rawbonelist=[]
+    init_BoneRotations=[]
+    for i in range(0,boneCount):
+        bone=MchBone_class()
+
+        bone=boneList[i]
+        rawbonelist.append(bone)
+
+    #------adjust upperbody and lower body rotation relative to root
+    for i in range(0,boneCount):
+        Vec=Vector((0,0,1))
+     
+
+        if char_name in(["d000","d001","d002","d003","d004","d005","d006","d007",\
+                        "d009","d010","d011","d012","d014","d060","d069",\
+                        "d018","d019","d020","d021","d068","d022","d023","d024","d025",\
+                        "d026","d061","d067","d047","d048","d064","d073","d049","d050","d051","d052","d053","d075",\
+                        "d032","d033","d034","d035","d036","d037","d065",\
+                        "d054","d055","d056","d057","d058","d059",\
+                        "d040","d041","d042","d074"]):
+            if(i==0):
+                Vec=Vector((-1,0,0))           
+                
+            else:
+                Vec=Vector((0,0,1))
+
+
+        elif char_name in(["d015","d016","d017","d027","d028","d029","d030"]):
+            if(i==0):
+                Vec=Vector((0,0,1))
+            else:
+                Vec=Vector((0,0,1))
+
+        rawbonelist[i].tail=Vec*rawbonelist[i].length/256+rawbonelist[rawbonelist[i].parent].tail
+        rawbonelist[i].head=rawbonelist[rawbonelist[i].parent].tail
+
+    createRig(char_name+"_armature_raw",Vector((0,0,0)),rawbonelist)
+
+    armature_raw=bpy.context.scene.objects[char_name+"_armature_raw"]
+    bpy.context.view_layer.objects.active=armature_raw
+
+    #--------adjust root rotation
+    if char_name in(["d000","d001","d002","d003","d004","d005","d006","d007",\
+                        "d009","d010","d011","d012","d014","d060","d069",\
+                        "d018","d019","d020","d021","d068","d022","d023","d024","d025",\
+                        "d026","d061","d067","d047","d048","d064","d073","d049","d050","d051","d052","d053","d075",\
+                        "d032","d033","d034","d035","d036","d037","d065",\
+                        "d054","d055","d056","d057","d058","d059",\
+                        "d040","d041","d042","d074"]):
+        armature_raw.rotation_euler.rotate_axis('Y',math.radians(90))
+        armature_raw.rotation_euler.rotate_axis('X',math.radians(90))
+        
+    bpy.ops.object.transform_apply()
+    
+    
+    return armature_raw
+    
 def ClearScene():
     scn = bpy.context.scene
 #    for ob in scn.objects:
@@ -621,7 +681,7 @@ def ReadBone(inputfile):
     return boneList
 
 
-def RestPose(mchfile,boneList,char_name):
+def RestPose(mchfile,boneList,charname):
 
     BoneRotations=[]
     header=ReadMCH(mchfile)
@@ -697,7 +757,7 @@ def RestPose(mchfile,boneList,char_name):
     fifthRow = ["N","N","N","N",6,7,"N","N","N"]
     sixthRow = ["N","N","N",11,12,15,16,19,20]
 
-    if char_name in ["d022","d023","d024","d025","d026","d051","d075","d067","d061"]:#RINOA + Soldier/Spacesuit Rinoa
+    if charname in ["d022","d023","d024","d025","d026","d051","d075","d067","d061"]:#RINOA + Soldier/Spacesuit Rinoa
         BoneSequence = firstRow + \
         ["N",3,5,"N","N","N",6,12,18,\
         10,16,22,27,29,30,31,9,11,\
@@ -705,7 +765,7 @@ def RestPose(mchfile,boneList,char_name):
         "N","N","N","N",7,8,"N","N","N",\
         "N","N","N",13,14,19,20,24,25]
 
-    elif char_name in ["d000","d001","d002","d003","d004","d005","d006","d007","d049","d052","d053","d060"]:#SQUALL + Spacesuit Squall
+    elif charname in ["d000","d001","d002","d003","d004","d005","d006","d007","d049","d052","d053","d060"]:#SQUALL + Spacesuit Squall
         BoneSequence = firstRow + \
         secondRow + \
         thirdRow + \
@@ -713,7 +773,7 @@ def RestPose(mchfile,boneList,char_name):
         fifthRow + \
         sixthRow
 
-    elif char_name in ["d027","d028","d029","d030", "d066"]:#SELPHIE + Soldier Selphie
+    elif charname in ["d027","d028","d029","d030", "d066"]:#SELPHIE + Soldier Selphie
         BoneSequence = firstRow + \
         secondRow + \
         [9,14,19,"N","N","N","N",8,10,\
@@ -721,7 +781,7 @@ def RestPose(mchfile,boneList,char_name):
         fifthRow + \
         ["N","N","N",11,12,16,17,21,22]
 
-    elif char_name in ["d009","d010","d011","d012","d014", "d054","d055","d056","d057","d059", "d069"]:#ZELL + Kids + Soldier Zell
+    elif charname in ["d009","d010","d011","d012","d014", "d054","d055","d056","d057","d059", "d069"]:#ZELL + Kids + Soldier Zell
         BoneSequence = firstRow + \
         secondRow + \
         thirdRow + \
@@ -729,7 +789,7 @@ def RestPose(mchfile,boneList,char_name):
         fifthRow + \
         sixthRow
 
-    elif char_name in ["d015","d016","d017", "d070"]:#IRVINE + Soldier
+    elif charname in ["d015","d016","d017", "d070"]:#IRVINE + Soldier
         BoneSequence = firstRow + \
         ["N",3,6,5,11,"N","N","N","N",\
         10,18,25,32,"N","N","N",9,14,\
@@ -737,7 +797,7 @@ def RestPose(mchfile,boneList,char_name):
         20,"N",27,"N",7,8,12,13,"N",\
         "N","N","N",15,16,22,23,29,30]
 
-    elif char_name in ["d018","d019","d020","d021","d050", "d068"]:#QUISTIS + Soldier Quistis
+    elif charname in ["d018","d019","d020","d021","d050", "d068"]:#QUISTIS + Soldier Quistis
         BoneSequence = firstRow + \
         secondRow + \
         [9,14,20,15,21,"N","N",8,10,\
@@ -745,7 +805,7 @@ def RestPose(mchfile,boneList,char_name):
         fifthRow + \
         ["N","N","N",11,12,17,18,23,24]
 
-    elif char_name in ["d040","d041","d042","d035","d074"]:#EDEA
+    elif charname in ["d040","d041","d042","d035","d074"]:#EDEA
         BoneSequence = firstRow + \
         ["N",3,5,9,12,"N","N","N","N",\
         10,"N","N","N","N","N","N",8,11,\
@@ -753,7 +813,7 @@ def RestPose(mchfile,boneList,char_name):
         fifthRow + \
         ["N","N","N",13,14,17,18,21,22]
 
-    elif char_name in ["d058"]:#kid Quistis
+    elif charname in ["d058"]:#kid Quistis
         BoneSequence = firstRow + \
         secondRow + \
         [9,14,"N","N","N","N",19,8,10,\
@@ -761,7 +821,7 @@ def RestPose(mchfile,boneList,char_name):
         fifthRow + \
         ["N","N","N",11,12,16,17,21,22]
 
-    elif char_name in ["d045","d046","d072", "d063"]:#KIROS + Spacesuit Kiros
+    elif charname in ["d045","d046","d072", "d063"]:#KIROS + Spacesuit Kiros
         BoneSequence = firstRow + \
         ["N",3,5,28,32,34,27,31,33,\
         9,14,19,26,30,21,20,8,10,\
@@ -769,7 +829,7 @@ def RestPose(mchfile,boneList,char_name):
         fifthRow + \
         ["N","N","N",11,12,16,17,23,24]
 
-    elif char_name in ["d047","d048","d073", "d064"]:#WARD + Spacesuit Ward
+    elif charname in ["d047","d048","d073", "d064"]:#WARD + Spacesuit Ward
         BoneSequence = firstRow + \
         ["N",3,5,12,14,"N","N","N","N",\
         9,"N","N","N","N","N","N",8,10,\
@@ -777,7 +837,7 @@ def RestPose(mchfile,boneList,char_name):
         "N","N","N","N",6,7,18,19,20,\
         22,23,24,11,13,17,21,27,28]
  
-    elif char_name in ["d032","d033","d034","d035","d036","d037","d065"]:#SEIFER
+    elif charname in ["d032","d033","d034","d035","d036","d037","d065"]:#SEIFER
         BoneSequence = \
         [0,1,2,6,8,20,5,17,"N",\
         "N",4,7,3,11,"N","N","N","N",\
@@ -786,7 +846,7 @@ def RestPose(mchfile,boneList,char_name):
         25,33,34,"N",9,10,12,14,13,\
         24,15,26,21,22,29,30,37,38]
 
-    elif char_name in ["d043","d044","d071", "d062"]:#LAGUNA + Spacesuit Laguna
+    elif charname in ["d043","d044","d071", "d062"]:#LAGUNA + Spacesuit Laguna
         BoneSequence = \
         [0,1,2,4,12,19,9,16,"N",\
         "N",3,5,"N","N","N","N","N","N",\
@@ -832,189 +892,22 @@ def RestPose(mchfile,boneList,char_name):
         rotY=math.pi*(rotY)/0x800
         rotZ=math.pi*(rotZ)/0x800
 
-        eul=Euler((rotX,rotY,rotZ),'YXZ')
+        #eul=Euler((rotX,rotY,rotZ),'YXZ')
+        eul=Euler((0,0,0),'YXZ')
         if (i==0):
             boneList[i].head=Vector((0,0,0))
             boneList[i].length=Vector((anim.offset[1],anim.offset[0],anim.offset[2])).length
 
         else:
             boneList[i].head=boneList[boneList[i].parent].tail
-            if(i==1):
-               eul.rotate_axis('Y',math.radians(-85))
-            if(i==2):
-                if rotX>0:
-                    eul.rotate_axis('Y',math.radians(-90))
-                else:
-                    eul.rotate_axis('Y',math.radians(90))
+           
 
-            if(boneList[i].name=="neck"):
-               eul.rotate_axis('Y',math.radians(180))
-
-            if(boneList[i].name=="head"):
-               eul.rotate_axis('Y',math.radians(170))
-
-
-            if(boneList[i].name=="hair0"):
-               eul.rotate_axis('Y',math.radians(150))
-
-            if(boneList[i].name=="hair1"):
-               eul[1]=0
-
-            if(boneList[i].name=="hair2"):
-                eul[1]=0
-
-            if(boneList[i].name=="hair3"):
-               eul.rotate_axis('Y',math.radians(-45))
-
-
-            if(boneList[i].name=="collar0"):
-                eul[0]=0
-                eul.rotate_axis('Z',math.radians(-30))
-                eul.rotate_axis('Y',math.radians(-90))
-            if(boneList[i].name=="collar2"):
-                eul[0]=0
-                eul.rotate_axis('Z',math.radians(30))
-                eul.rotate_axis('Y',math.radians(-90))
-
-            if(boneList[i].name=="collar1"):
-                eul[0]=0
-                eul.rotate_axis('X',math.radians(90))
-                eul.rotate_axis('Y',math.radians(30))
-
-            if(boneList[i].name=="collar3"):
-                eul[0]=0
-                eul.rotate_axis('X',math.radians(-90))
-                eul.rotate_axis('Y',math.radians(30))
-
-
-
-            if(boneList[i].name=="cape0"):
-
-                eul[0]=0
-                eul[1]=0
-                eul[2]=0
-                eul.rotate_axis('Y',math.radians(-20))
-
-
-            if(boneList[i].name=="cape1"):
-                eul[0]=0
-                eul[1]=0
-                eul[2]=0
-                eul.rotate_axis('Y',math.radians(-20))
-
-
-            #if(boneList[i].name=="cape2"):
-                #eul[0]=0
-            if(boneList[i].name=="cape3"):
-                eul[0]=0
-            if(boneList[i].name=="cape4"):
-                eul[0]=0
-                eul[1]=0
-                eul[2]=0
-            #if(boneList[i].name=="cape5"):
-                #eul[0]=0
-
-            if(boneList[i].name=="belt0"):
-                eul.rotate_axis('Y',math.radians(100))
-                eul.rotate_axis('X',math.radians(-10))
-            if(boneList[i].name=="belt1"):
-                eul.rotate_axis('Y',math.radians(100))
-                eul.rotate_axis('X',math.radians(10))
-
-            if(boneList[i].name=="belt2"):
-                eul.rotate_axis('Z',math.radians(30))
-                eul.rotate_axis('Y',math.radians(120))
-
-            if(boneList[i].name=="belt4"):
-                eul.rotate_axis('Z',math.radians(-30))
-                eul.rotate_axis('Y',math.radians(120))
-
-
-            if(boneList[i].name=="belt3"):
-                eul.rotate_axis('Y',math.radians(90))
-                eul.rotate_axis('Z',math.radians(-45))
-            if(boneList[i].name=="belt5"):
-                eul.rotate_axis('Y',math.radians(90))
-                eul.rotate_axis('Z',math.radians(45))
-
-
-
-            if(boneList[i].name=="dress2"):
-                eul[2]=0
-                #eul.rotate_axis('Y',math.radians(-90))
-            if(boneList[i].name=="dress5"):
-                eul[2]=0
-                #eul.rotate_axis('Y',math.radians(-90))
-
-            if(boneList[i].name=="dress1"):
-                eul.rotate_axis('Y',math.radians(90))
-                eul.rotate_axis('Z',math.radians(90))
-            if(boneList[i].name=="dress4"):
-                eul.rotate_axis('Y',math.radians(90))
-                eul.rotate_axis('Z',math.radians(90))
-
-            if(boneList[i].name=="dress0"):
-                #eul.rotate_axis('Z',math.radians(40))
-                #eul.rotate_axis('X',math.radians(90))
-                #eul.rotate_axis('Y',math.radians(0))
-                eul[2]=0
-                eul[1]=0
-                eul[0]=0
-
-            if(boneList[i].name=="dress3"):
-                #eul.rotate_axis('Z',math.radians(-40))
-                #eul.rotate_axis('X',math.radians(-90))
-                #eul.rotate_axis('Y',math.radians(0))
-                eul[2]=0
-                eul[1]=0
-                eul[0]=0
-
-
-
-            if(boneList[i].name=="breast_R"):
-
-                eul.rotate_axis('Y',math.radians(45))
-                eul.rotate_axis('X',math.radians(-10))
-            if(boneList[i].name=="breast_L"):
-               eul.rotate_axis('Y',math.radians(45))
-               eul.rotate_axis('X',math.radians(10))
-               eul.rotate_axis('Z',math.radians(180))
-
-            if(boneList[i].name=="shoulder_R"):
-              eul.rotate_axis('Y',math.radians(45))
-              eul.rotate_axis('Z',math.radians(70))
-              eul.rotate_axis('X',math.radians(15))
-
-
-            if(boneList[i].name=="shoulder_L"):
-               eul.rotate_axis('Y',math.radians(45))
-               eul.rotate_axis('Z',math.radians(-70))
-               eul.rotate_axis('X',math.radians(-15))
-
-            if(boneList[i].name=="hip_R"):
-               eul[1]=0
-               eul[2]=0
-               eul.rotate_axis('Y',math.radians(-20))
-            if(boneList[i].name=="hip_L"):
-                eul[1]=0
-                eul[2]=0
-                eul.rotate_axis('Y',math.radians(-20))
-            if(boneList[i].name=="thigh_R"):
-                eul[0]=0
-                eul[1]=0
-                eul[2]=0
-            if(boneList[i].name=="thigh_L"):
-                eul[0]=0
-                eul[1]=0
-                eul[2]=0
-
-
-
-        Vec.rotate(eul)
+        #Vec.rotate(eul)
 
         boneList[i].tail=Vec*boneList[i].length/256+boneList[i].head
 
         BoneRotations.append(eul)
+
 
     return BoneRotations
 
@@ -1026,7 +919,7 @@ def poseRig(armature,boneList,poseList,offset,frame_num):
 
     for boneID in range(0,len(poseList)):
         pbone = armature.pose.bones[boneList[boneID].name]
-        pbone.bone.select=True
+        pbone.select=True
 
         # Set rotation mode to Euler XYZ, easier to understand
                 # than default quaternions
@@ -1056,58 +949,8 @@ def poseRig(armature,boneList,poseList,offset,frame_num):
 
         #BEWARE--ROTATION ARE ALONG PARENT BONE AXIS, NOT CURRENT BONE LOCAL AXIS
 
-
-        elif(boneID==2):
-
-            pbone.rotation_euler.rotate(   Euler  ((0,0,math.radians(-90)),'YXZ'))
-        elif(boneID==1):
-
-            pbone.rotation_euler.rotate(   Euler  ((math.radians(180),0,0),'YXZ'))
-            pbone.rotation_euler.rotate(   Euler  ((0,0,math.radians(-90)),'YXZ'))
-
-
-        elif(pbone.name=='breast_R'):
-            pbone.rotation_euler.rotate(   Euler  ((0,math.radians(180),0),'YXZ'))
-
-
-        elif(pbone.name=='breast_L'):
-            pbone.rotation_euler.rotate(   Euler  ((0,math.radians(180),0),'YXZ'))
-
-        elif(pbone.name=='belt0'):
-            pbone.rotation_euler.rotate(   Euler  ((0,math.radians(180),0),'YXZ'))
-        elif(pbone.name=='belt1'):
-            pbone.rotation_euler.rotate(   Euler  ((0,math.radians(180),0),'YXZ'))
-        elif(pbone.name=='belt2'):
-            pbone.rotation_euler.rotate(   Euler  ((0,math.radians(180),0),'YXZ'))
-        elif(pbone.name=='belt4'):
-            pbone.rotation_euler.rotate(   Euler  ((0,math.radians(180),0),'YXZ'))
-        elif(pbone.name=='belt5'):
-            pbone.rotation_euler.rotate(   Euler  ((math.radians(90),0,0),'YXZ'))
-
-        elif(pbone.name=='dress1'):
-            pbone.rotation_euler.rotate(   Euler  ((0,0,math.radians(90)),'YXZ'))
-        elif(pbone.name=='dress4'):
-            pbone.rotation_euler.rotate(   Euler  ((0,0,math.radians(90)),'YXZ'))
-
-        elif(pbone.name=='cape3'):
-            pbone.rotation_euler.rotate(   Euler  ((0,math.radians(180),0),'YXZ'))
-
-        elif(pbone.name=='hair5'):
-            pbone.rotation_euler.rotate(   Euler  ((0,math.radians(180),0),'YXZ'))
-
-        elif(pbone.name=='collar0'):
-            pbone.rotation_euler.rotate(   Euler  ((0,math.radians(180),0),'YXZ'))
-
-        elif(pbone.name=='collar2'):
-            pbone.rotation_euler.rotate(   Euler  ((0,math.radians(180),0),'YXZ'))
-
-
-
-
-
-
         pbone.keyframe_insert(data_path="rotation_euler" ,frame=frame_num)
-        pbone.bone.select=False
+        pbone.select=False
 
 
 
@@ -1166,11 +1009,11 @@ def Retarget(arm_to_copy,arm_retarget,anim):
         cns0.owner_space = 'WORLD'
         cns0.target_space = 'WORLD'
 
-        root_retarget.bone.select=True
+        root_retarget.select=True
         bpy.ops.pose.visual_transform_apply()
         root_retarget.constraints.remove(root_retarget.constraints[0])
         root_retarget.keyframe_insert(data_path="location" ,frame=i)
-        root_retarget.bone.select=False
+        root_retarget.select=False
 
         for j in range(0,anim.boneCount):
             bone_retarget=arm_retarget.pose.bones[j]
@@ -1185,27 +1028,150 @@ def Retarget(arm_to_copy,arm_retarget,anim):
 
 
             #apply transform
-            bone_retarget.bone.select=True
+            bone_retarget.select=True
             bpy.ops.pose.visual_transform_apply()
             for k in range(0,len(bone_retarget.constraints)):
-                bone_retarget.constraints.remove(bone_retarget.constraints[k])
+                bone_retarget.constraints.remove(bone_retarget.constraints[0])
 
 
             bone_retarget.rotation_mode = 'YXZ'
             bone_retarget.keyframe_insert(data_path="rotation_euler" ,frame=i)
-            bone_retarget.bone.select=False
+            bone_retarget.select=False
 
 
         bpy.context.scene.frame_set(0)
 
     bpy.ops.object.mode_set(mode='OBJECT')
 
-
-
     return
-def ReadAnim(boneList,onefile,char_name):
+def Retarget_restpose(arm_retarget,rest_anim_name):
+    """Get anim act0 and frame 0 to define rest pose"""
+
+    boneCount=len(arm_retarget.pose.bones)
+    
+    bpy.context.view_layer.objects.active = arm_retarget
+
+    arm_retarget.animation_data.action=bpy.data.actions[rest_anim_name+"re"]
+    
+    bpy.ops.object.mode_set(mode='POSE')
+    arm_retarget.data.pose_position='POSE'
+            
+    bpy.ops.pose.armature_apply()
+     
+    bpy.ops.pose.transforms_clear()
+    #update frame zero    
+    for i in range(0,boneCount):
+
+        pbone=arm_retarget.pose.bones[i]
+        pbone.select=True  
+        pbone.rotation_mode='YXZ'
+        pbone.keyframe_insert(data_path="rotation_euler" ,frame=0)
+        
+
+    bpy.ops.object.mode_set(mode='OBJECT')
+    
+   
+    return
+
+def DeltaRotation(armature,boneList,char_name):
+    """Get euler rotation matrix from the FF8 raw rest pose to an armature rest pose, """
+    
+    #create raw armature( for charaone )
+    
+   
+    armature_raw=RAWarmature(boneList,char_name)
+    
+    edit_raw=bpy.data.armatures[armature_raw.name]
+    
+    bpy.context.view_layer.objects.active=armature_raw    
+    
+    boneCount=len(armature_raw.pose.bones)
+    
+    #initial pose from raw armature
+    bpy.ops.object.mode_set(mode='POSE')
+    
+    if char_name in(["d000","d001","d002","d003","d004","d005","d006","d007",\
+                        "d009","d010","d011","d012","d014","d060","d069",\
+                        "d018","d019","d020","d021","d068","d022","d023","d024","d025",\
+                        "d026","d061","d067","d047","d048","d064","d073","d049","d050","d051","d052","d053","d075",\
+                        "d032","d033","d034","d035","d036","d037","d065",\
+                        "d054","d055","d056","d057","d058","d059",\
+                        "d040","d041","d042","d074"]):
+
+        for i in range(0,boneCount):
+            if boneList[i].name=="upperbody":
+                bone=armature_raw.pose.bones[boneList[i].name]
+                bone.select=True
+                bone.rotation_mode='YXZ'
+                eul = Euler((math.radians(90),0,math.radians(-90)),'YXZ')
+                bone.rotation_euler.rotate(eul)
+                
+            elif boneList[i].name=="lowerbody":
+                bone=armature_raw.pose.bones[boneList[i].name]
+                bone.select=True
+                bone.rotation_mode='YXZ'
+                eul = Euler((math.radians(90),0,math.radians(-90)),'YXZ')
+                bone.rotation_euler.rotate(eul)
+        bpy.ops.pose.armature_apply()
+
+    
+    
+    bpy.ops.object.mode_set(mode='EDIT')
+    init_BoneMat=[]
+
+    for i in range(0,boneCount):
+        ebone=edit_raw.edit_bones[boneList[i].name]
+        ebone.select=True
+        mat=ebone.matrix.copy().to_3x3().normalized()
+
+        init_BoneMat.append(mat)
+  
+    
+    #new rest pose 
+    DeltaRotations=[]
+
+    edit_arm=bpy.data.armatures[armature.name]
+ 
+    bpy.context.view_layer.objects.active = armature
+
+    bpy.context.scene.frame_set(0)
+
+    bpy.ops.object.mode_set(mode='EDIT')
+
+    for i in range(0,boneCount):
+        bone=edit_arm.edit_bones[boneList[i].name]
+        bone.select=True
+        mat=bone.matrix.copy().to_3x3().normalized()
+           
+        mat_init=init_BoneMat[i]
+        
+        
+        # Delta matrix
+        delta_mat = mat @ (mat_init.inverted())
+
+        # Extract euler rotation
+        eul = delta_mat.to_euler('YXZ')
+
+        DeltaRotations.append(eul)
+   
+    bpy.ops.object.mode_set(mode='OBJECT')
+    #Delete the raw armature
+    arm_name=armature_raw.name
+    bpy.context.view_layer.objects.active =armature_raw
+    bpy.ops.object.delete()
+    for armature in bpy.data.armatures:
+        if armature.name==arm_name:
+            bpy.data.armatures.remove(armature)
+    
+   
+    return DeltaRotations
+
+def ReadAnim(armature_rest,boneList,onefile,char_name):
     """Returns a list of animations. An animation is a list of frames. A frame is a pose list of a bone list."""
     print("Extracting anim of {} from chara.one".format(char_name))
+    BoneRotations=[]
+    bpy.context.scene.frame_set(0)
+    
     onefile.seek(0,0)
     charCount=int.from_bytes(onefile.read(4), byteorder='little')
     print("{} characters".format(charCount))
@@ -1224,8 +1190,8 @@ def ReadAnim(boneList,onefile,char_name):
         if(alone.name==char_name):
             break
 
-    armature_raw=bpy.context.scene.objects[char_name+"_armature_raw"]
-    armature_rest=bpy.context.scene.objects[char_name+"_armature"]
+    armature_raw=RAWarmature(boneList,char_name)
+    
     if(i==charCount-1):
         print("no {} found in chara.one".format(char_name))
     else:
@@ -1237,7 +1203,6 @@ def ReadAnim(boneList,onefile,char_name):
         print("AnimCount:{}".format(alone.AnimCount))
 
         bpy.context.view_layer.objects.active = armature_raw
-
 
         for i in range(0,alone.AnimCount):
 
@@ -1289,12 +1254,12 @@ def ReadAnim(boneList,onefile,char_name):
                     frame.poseList.append(pose)
                 anim.frameList.append(frame)
 
-
-
             CreateAction(armature_raw,boneList,anim)
-
+            
             #Retarget the animation on the restpose armature
             Retarget(armature_raw,armature_rest,anim)
+            if i==0:
+                Retarget_restpose(armature_rest,"{}_act0".format(char_name))
             #Delete the raw animation
             act=bpy.data.actions[anim.name]
             #act.user_clear()
@@ -1305,11 +1270,13 @@ def ReadAnim(boneList,onefile,char_name):
             act.use_fake_user = True
 
 
-
-
     #Delete the raw armature
+    arm_name=armature_raw.name
     bpy.context.view_layer.objects.active =armature_raw
     bpy.ops.object.delete()
+    for armature in bpy.data.armatures:
+        if armature.name==arm_name:
+            bpy.data.armatures.remove(armature)
     #delete unused animation
     for u in bpy.data.actions:
         if (u.users==0):
@@ -1321,6 +1288,7 @@ def ReadAnim(boneList,onefile,char_name):
     armature_rest.data.display_type='WIRE'
 
     return
+
 
 def TIM_TO_BLEND(inputfile,name):
     inputfile.seek(0,0)
@@ -1473,15 +1441,30 @@ def MCH_TO_BLEND(context,directory=""):
         if extension==".mch":
             mch_found=1
             char_name=filename[0:4]
-        elif extension==".one":
-            one_found=1
-            curr_one_name=filename
-            print("{} found\n".format(entity))
+            
     if mch_found==0:
         print("NO MCH found! Please put it in INPUT folder\n")
         return
+
+    for entity in filelist:
+        (filename, extension) = os.path.splitext(entity)
+        if extension==".one":
+            pos=-1
+            curr_one_name=filename
+            onepath=''.join([directory,curr_one_name,".one"])
+            onefile=open(onepath,"rb")
+            onetxt=onefile.read()
+            pos=onetxt.find(bytes(char_name, 'utf-8'))#character header position in chara.one
+            if pos==-1:
+                print("the chara.one doesn't contain {}\n".format(char_name))
+            else:
+                one_found=1
+            onefile.close()
+  
+
     if one_found==0:
         print("NO chara.ONE found! No animation will be created\n")
+        return
 
 
     filepath=''.join([directory,char_name,".mch"])
@@ -1658,6 +1641,7 @@ def MCH_TO_BLEND(context,directory=""):
     ["p183", 150]]
     
     #check if FF8RE or FF8 by comparing file size.
+    
     isFF8RE=0
     inputfile.read() 
     mchsize=inputfile.tell()#get mch filesize
@@ -1669,7 +1653,11 @@ def MCH_TO_BLEND(context,directory=""):
             if m[0]==char_name:
                 m_index=ff8REmdiv.index(m)
                 break
-        SCALE*=ff8REmdiv[m_index][1]
+    #IF you try to import a custom MCH ( heavier than a FFRe file, then #comment this section of the code
+        #SCALE*=ff8REmdiv[m_index][1]
+
+
+    
         
         
     inputfile.seek(header.ModelAddress+header.VOffset)
@@ -1845,7 +1833,10 @@ def MCH_TO_BLEND(context,directory=""):
     inputfile.seek(0,0)
     boneList=ReadBone(inputfile)
     inputfile.seek(0,0)
+    
     BoneRotations=RestPose(inputfile,boneList,header.char_name)
+    
+    
 
 
     #----Create armature---19/09/2024---Shunsq
@@ -1854,61 +1845,11 @@ def MCH_TO_BLEND(context,directory=""):
     createRig(char_name+"_armature",Vector((0,0,0)),boneList)
 
     armature_rest=bpy.context.scene.objects[char_name+"_armature"]
+  
 
     bpy.context.view_layer.objects.active=armature_rest
 
-
-    #create raw armature( for charaone )
-    rawbonelist=[]
-    for i in range(0,header.BoneCount):
-        bone=MchBone_class()
-
-        bone=boneList[i]
-        rawbonelist.append(bone)
-
-    #------adjust upperbody and lower body rotation relative to root
-    for i in range(0,header.BoneCount):
-        Vec=Vector((0,0,1))
-
-
-        if char_name in(["d000","d001","d002","d003","d004","d005","d006","d007",\
-                        "d009","d010","d011","d012","d014","d060","d069",\
-                        "d018","d019","d020","d021","d068","d022","d023","d024","d025",\
-                        "d026","d061","d067","d047","d048","d064","d073","d049","d050","d051","d052","d053","d075",\
-                        "d032","d033","d034","d035","d036","d037","d065",\
-                        "d054","d055","d056","d057","d058","d059",\
-                        "d040","d041","d042","d074"]):
-            if(i==0):
-                Vec=Vector((-1,0,0))
-            else:
-                Vec=Vector((0,0,1))
-
-        elif char_name in(["d015","d016","d017","d027","d028","d029","d030"]):
-            if(i==0):
-                Vec=Vector((0,0,1))
-            else:
-                Vec=Vector((0,0,1))
-
-        rawbonelist[i].tail=Vec*rawbonelist[i].length/256+rawbonelist[rawbonelist[i].parent].tail
-        rawbonelist[i].head=rawbonelist[rawbonelist[i].parent].tail
-
-    createRig(char_name+"_armature_raw",Vector((0,0,0)),rawbonelist)
-
-    armature_raw=bpy.context.scene.objects[char_name+"_armature_raw"]
-    bpy.context.view_layer.objects.active=armature_raw
-
-    #--------adjust root rotation
-    if char_name in(["d000","d001","d002","d003","d004","d005","d006","d007",\
-                        "d009","d010","d011","d012","d014","d060","d069",\
-                        "d018","d019","d020","d021","d068","d022","d023","d024","d025",\
-                        "d026","d061","d067","d047","d048","d064","d073","d049","d050","d051","d052","d053","d075",\
-                        "d032","d033","d034","d035","d036","d037","d065",\
-                        "d054","d055","d056","d057","d058","d059",\
-                        "d040","d041","d042","d074"]):
-        armature_raw.rotation_euler.rotate_axis('Y',math.radians(90))
-        armature_raw.rotation_euler.rotate_axis('X',math.radians(90))
-
-
+    
     #END----Create armature---19/09/2024---Shunsq
     #--------------------------------------------
 
@@ -1929,8 +1870,9 @@ def MCH_TO_BLEND(context,directory=""):
     if one_found==1:
         filepath=''.join([directory,curr_one_name,".one"])
         onefile=open(filepath,"rb")
-        ReadAnim(boneList,onefile,char_name)
-
+        ReadAnim(armature_rest,boneList,onefile,char_name)
+        BoneRotations=DeltaRotation(armature_rest,boneList,char_name)
+        
 
     #Read the skin objects
     char_ob=bpy.context.scene.objects[header.char_name]
@@ -1982,6 +1924,8 @@ def MCH_TO_BLEND(context,directory=""):
             if(i>=min)and(i<=max):
                 Vec.rotate(rot_eul)
                 Vec+=head
+                
+    
 
 
     # Give mesh object an armature modifier, using vertex groups but
@@ -2024,20 +1968,46 @@ def BLEND_TO_MCH(context,directory=""):
     #outputpath=''.join([outdir_name,char_name,'-new.mch'])
     #print("{}\n".format(outputpath))
 
-    mch_found=0
-    char_name='none'
 
+    mch_found=0
+    one_found=0
+    char_name='none'
     filelist=[entity for entity in os.listdir(directory)]#create list
     for entity in filelist:
         (filename, extension) = os.path.splitext(entity)
         if extension==".mch":
             mch_found=1
             char_name=filename[0:4]
-            curr_model_name=char_name
-            break
+            
+    if mch_found==0:
+        print("NO MCH found! Please put it in INPUT folder\n")
+        return
+
+    for entity in filelist:
+        (filename, extension) = os.path.splitext(entity)
+        if extension==".one":
+            pos=-1
+            curr_one_name=filename
+            onepath=''.join([directory,curr_one_name,".one"])
+            onefile=open(onepath,"rb")
+            onetxt=onefile.read()
+            pos=onetxt.find(bytes(char_name, 'utf-8'))#character header position in chara.one
+            if pos==-1:
+                print("the chara.one doesn't contain {}\n".format(char_name))
+            else:
+                one_found=1
+            onefile.close()
+  
+    if one_found==0:
+        print("NO chara.ONE found!\n")
+        return
+
 
     inputpath=''.join([directory,char_name,".mch"])
     outputpath=''.join([directory,char_name,'-new.mch'])
+    
+
+    print("model name:{}\n".format(char_name))
 
     inputfile=open(inputpath,"rb")
 
@@ -2109,7 +2079,7 @@ def BLEND_TO_MCH(context,directory=""):
     newheader.QuadCount=Quadcount
     newheader.BoneOffset=header.BoneOffset
     newheader.VOffset=header.VOffset
-    newheader.TexAnimOffset=newheader.VOffset+8*Vcount#a vertex is 8 bytes
+    newheader.TexAnimOffset=newheader.VOffset+8*Vcount#a  is 8 bytes
     newheader.FOffset=newheader.TexAnimOffset+newheader.TexAnimSize# tex animation is at least 0x14 bytes
     newheader.Unk1Offset=newheader.FOffset+Fcount*64#a face is 64 bytes
     newheader.ObOffset=newheader.Unk1Offset+newheader.Unk1Count*32#unk 1 is 32 bytes
@@ -2183,7 +2153,11 @@ def BLEND_TO_MCH(context,directory=""):
     inputfile.seek(0,0)
     bonelist=ReadBone(inputfile)#bone size is still [-256,256] here
     inputfile.seek(0,0)
-    BoneRotations=RestPose(inputfile,bonelist,char_name)
+    init_BoneRotations=RestPose(inputfile,bonelist,char_name)
+    
+    BoneRotations=DeltaRotation(skl,bonelist,char_name)
+    
+    
     outputfile.seek(0,2)
     print("REAL BONE OFFSET:{} ".format(hex(outputfile.tell()-header.ModelAddress),'08x'))
 
@@ -2248,7 +2222,8 @@ def BLEND_TO_MCH(context,directory=""):
             if ( (bonelist[i].name==vgroup.name)  and (boneID==-1)):
                 boneID=i
 
-        rot_eul=Euler((-BoneRotations[boneID][0],-BoneRotations[boneID][1],-BoneRotations[boneID][2]), 'ZYX')
+        #rot_eul=Euler((-BoneRotations[boneID][0],-BoneRotations[boneID][1],-BoneRotations[boneID][2]), 'ZYX')
+        mat=(BoneRotations[boneID].to_matrix()).inverted()
 
 
         for orderID in range(len(Vorder[vgroup.index])):
@@ -2257,11 +2232,13 @@ def BLEND_TO_MCH(context,directory=""):
             nvert=Vector([0,0,0])
             head=bone.head_local
             nvert=(Vec-head)
-            nvert.rotate(rot_eul)
+            
+            #nvert.rotate(rot_eul)
+            nvert= mat @ nvert
 
-            nvert[0]=math.floor(nvert[0]*256)*UPSCALE
-            nvert[1]=math.floor(nvert[1]*256)*UPSCALE
-            nvert[2]=math.floor(nvert[2]*256)*UPSCALE
+            nvert[0]=math.floor(nvert[0]*256*UPSCALE)
+            nvert[1]=math.floor(nvert[1]*256*UPSCALE)
+            nvert[2]=math.floor(nvert[2]*256*UPSCALE)
 
             if nvert[0]<0:
                 nvert[0]+=0x10000
@@ -2524,7 +2501,7 @@ class MchToBlend_op(bpy.types.Operator):
 class BlendToMch_op(bpy.types.Operator):
     '''Export to FF8 (.mch)'''
     bl_idname = "ff8tools.blend2mch"#No capitals in bl_idname!!"
-    bl_label = "EXPORT folder must contain original MCH"
+    bl_label = "EXPORT folder must contain original MCH AND CHARA.ONE"
     bl_option ={'REGISTER'}
 
     directory: StringProperty(
@@ -2574,3 +2551,4 @@ if __name__=="__main__":
     register()
 
     print("Code successful!")
+
