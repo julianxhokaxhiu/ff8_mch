@@ -591,7 +591,7 @@ def RAWarmature (boneList,char_name):
 
         elif char_name in(["d015","d016","d017","d027","d028","d029","d030"]):
             if(i==0):
-                Vec=Vector((0,0,1))
+                Vec=Vector((0,-1,0))
             else:
                 Vec=Vector((0,0,1))
 
@@ -613,6 +613,9 @@ def RAWarmature (boneList,char_name):
                         "d040","d041","d042","d074"]):
         armature_raw.rotation_euler.rotate_axis('Y',math.radians(90))
         armature_raw.rotation_euler.rotate_axis('X',math.radians(90))
+    elif char_name in(["d015","d016","d017","d027","d028","d029","d030"]):
+        armature_raw.rotation_euler.rotate_axis('X',math.radians(-90))
+        armature_raw.rotation_euler.rotate_axis('Y',math.radians(90))
         
     bpy.ops.object.transform_apply()
     
@@ -1112,7 +1115,25 @@ def DeltaRotation(armature,boneList,char_name):
                 bone.rotation_mode='YXZ'
                 eul = Euler((math.radians(90),0,math.radians(-90)),'YXZ')
                 bone.rotation_euler.rotate(eul)
-        bpy.ops.pose.armature_apply()
+                
+    elif char_name in(["d015","d016","d017","d027","d028","d029","d030"]):
+
+        for i in range(0,boneCount):
+            if boneList[i].name=="upperbody":
+                bone=armature_raw.pose.bones[boneList[i].name]
+                bone.select=True
+                bone.rotation_mode='YXZ'
+                eul = Euler((math.radians(0),math.radians(-90),math.radians(90)),'YXZ')
+                bone.rotation_euler.rotate(eul)
+                
+            elif boneList[i].name=="lowerbody":
+                bone=armature_raw.pose.bones[boneList[i].name]
+                bone.select=True
+                bone.rotation_mode='YXZ'
+                eul = Euler((math.radians(0),math.radians(-90),math.radians(90)),'YXZ')
+                bone.rotation_euler.rotate(eul)
+    
+    bpy.ops.pose.armature_apply()
 
     
     
@@ -2551,4 +2572,5 @@ if __name__=="__main__":
     register()
 
     print("Code successful!")
+
 
