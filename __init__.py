@@ -14,6 +14,7 @@
 #    GNU General Public License for more details.                             #
 #*****************************************************************************#
 
+
 """***********************************************
 *********Fieldmodel blender script***************
 **********************************************"""
@@ -27,7 +28,7 @@ bl_info = {
     "name": "FF8 MCH Field Models",
     "author": "Shunsq,Julian Xhokaxhiu",
     "blender": (5, 0, 0),
-    "version": (0, 3, 2),
+    "version": (0, 4, 0),
     "location": "File > Import > FF8 Field Model (.mch)",
     "description": "Import field models from FF8",
     "category": "Import-Export"
@@ -1663,7 +1664,7 @@ def MCH_TO_BLEND(context,directory=""):
     
     #check if FF8RE or FF8 by comparing file size.
     
-    isFF8RE=0
+    isFF8RE=1
     inputfile.read() 
     mchsize=inputfile.tell()#get mch filesize
     if mchsize>150000:# FF8RE mch file is >150ko
@@ -1675,7 +1676,7 @@ def MCH_TO_BLEND(context,directory=""):
                 m_index=ff8REmdiv.index(m)
                 break
     #IF you try to import a custom MCH ( heavier than a FFRe file, then #comment this section of the code
-        #SCALE*=ff8REmdiv[m_index][1]
+        SCALE*=ff8REmdiv[m_index][1]
 
 
     
@@ -2490,6 +2491,13 @@ from bpy_extras.io_utils import ImportHelper, ExportHelper
 """**********************************************
 FF8 operators definitions for the user interface
 ************************************************"""
+
+_collected_classes = []
+
+def auto_register(cls):
+    _collected_classes.append(cls)
+    return cls
+@auto_register
 class MchToBlend_op(bpy.types.Operator):
     '''Import from FF8 (.mch)'''
     bl_idname = "ff8tools.mch2blend"#No capitals in bl_idname!!"
@@ -2518,11 +2526,11 @@ class MchToBlend_op(bpy.types.Operator):
         return {'FINISHED'}
 
 
-
+@auto_register
 class BlendToMch_op(bpy.types.Operator):
     '''Export to FF8 (.mch)'''
     bl_idname = "ff8tools.blend2mch"#No capitals in bl_idname!!"
-    bl_label = "EXPORT folder must contain original MCH AND CHARA.ONE"
+    bl_label = "OUTPUT folder must contain original MCH and CHARA.one"
     bl_option ={'REGISTER'}
 
     directory: StringProperty(
@@ -2530,7 +2538,7 @@ class BlendToMch_op(bpy.types.Operator):
         description="Where I will save my stuff")
 
     filter_folder: BoolProperty(
-        default=True,
+        default=False,
         options={"HIDDEN"}
         )
 
@@ -2554,23 +2562,29 @@ def menu_func_export(self, context):
 
 def register():#register all custom operators
     #check if already in menu
+        
+    for cls in _collected_classes:
+        bpy.utils.register_class(cls)
 
-    bpy.utils.register_class(MchToBlend_op)
-    bpy.utils.register_class(BlendToMch_op)
 
     bpy.types.TOPBAR_MT_file_import.append(menu_func_import)
     bpy.types.TOPBAR_MT_file_export.append(menu_func_export)
 
-def unregister():#unregister all custom operators
-    bpy.utils.unregister_class(MchToBlend_op)
-    bpy.utils.unregister_class(BlendToMch_op)
 
-    bpy.types.TOPBAR_MT_file_import.remove(menu_func_import)
-    bpy.types.TOPBAR_MT_file_export.remove(menu_func_export)
+def unregister():#unregister all custom operators
+    
+    for cls in reversed(_collected_classes):
+        bpy.utils.unregister_class(cls)
+
+    
+    try:
+        bpy.types.TOPBAR_MT_file_import.remove(menu_func_import)
+        bpy.types.TOPBAR_MT_file_export.remove(menu_func_export)
+    except Exception:
+        pass
 
 if __name__=="__main__":
     register()
 
     print("Code successful!")
-
 
