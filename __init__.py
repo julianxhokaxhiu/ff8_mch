@@ -476,6 +476,7 @@ def createMeshFromData(name, verts, faces, uvs):
     scn.collection.objects.link(ob)
     bpy.context.view_layer.objects.active = ob# was scn.objects.active = ob
     ob.select_set(state = True)
+    bpy.context.scene.tool_settings.use_uv_select_sync = False
 
     # Create mesh from given verts, faces.
     BVert=[[v.x,v.y,v.z] for v in verts]
@@ -510,7 +511,7 @@ def createMeshFromData(name, verts, faces, uvs):
             f.loops[3][uv_layer].uv=(uvs[faces[i].vt4].u/128,uvs[faces[i].vt4].v/128)
 
 
-    bpy.ops.uv.remove_doubles(threshold=0.08)
+    bpy.ops.uv.remove_doubles(threshold=0.00008)
 
 
 
@@ -2294,8 +2295,8 @@ def BLEND_TO_MCH(context,directory=""):
     print("REAL FACE OFFSET:{}\n".format(hex(outputfile.tell()-header.ModelAddress),'08x'))
 
     outputfile.seek(newheader.ModelAddress +newheader.FOffset,0)
-   
 
+    bpy.context.scene.tool_settings.use_uv_select_sync = False  
     uv_layer = me.uv_layers["{}UV".format(newheader.char_name)]
     Vinvert=[0 for i in range(newheader.VCount)]# if vertID is global ID, order ID is the Vgroup ID of vertID, offset is the position of the Vgroup, then Vinvert[vertID]=orderID +offset is the re-ordered ID
     offset=[0 for i in range(newheader.ObCount)]
